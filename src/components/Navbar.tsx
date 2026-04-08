@@ -1,21 +1,21 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { getCurrentUser, logout } from '@/lib/store';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const user = getCurrentUser();
+  const { user, profile, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
 
-  const handleLogout = () => {
+  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'User';
+
+  const handleLogout = async () => {
     if (confirm('Sign out?')) {
-      logout();
+      await signOut();
       navigate('/');
-      window.location.reload();
     }
   };
 
@@ -70,9 +70,9 @@ export default function Navbar() {
                 className="flex items-center gap-2 py-1 pl-1 pr-4 rounded-full bg-foreground/5 text-sm cursor-pointer hover:bg-foreground/10 transition-colors"
               >
                 <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-primary-foreground" style={{ background: 'var(--gradient-primary)' }}>
-                  {user.name.charAt(0)}
+                  {displayName.charAt(0).toUpperCase()}
                 </div>
-                <span>{user.name.split(' ')[0]}</span>
+                <span>{displayName.split(' ')[0]}</span>
               </button>
             </>
           ) : (

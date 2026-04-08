@@ -1,32 +1,60 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/hooks/useAuth';
-import { getListingsByUser, getMessagesForUser, getListingById, getUserById, deleteListing, formatDate } from '@/lib/store';
+import { useProfilesByIds } from '@/hooks/useProfile';
+import { supabase } from '@/integrations/supabase/client';
+import type { DressListing } from '@/lib/types';
+import { getMessagesForUser, getListingById, formatDate } from '@/lib/store';
 import { toast } from 'sonner';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { user, profile, loading } = useAuth();
   const [activeTab, setActiveTab] = useState<'listings' | 'received' | 'sent'>('listings');
-  const [, forceUpdate] = useState(0);
+  const [myListings, setMyListings] = useState<DressListing[]>([]);
+  const [loadingListings, setLoadingListings] = useState(true);
+
+  // Fetch user's listings from Supabase (exclude inactive)
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('dresses')
+      .select('*')
+      .eq('owner_id', user.id)
+      .neq('status', 'inactive')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        setMyListings((data as DressListing[]) || []);
+        setLoadingListings(false);
+      });
+  }, [user]);
+
+  // Messages still come from localStorage for now
+  const { received, sent } = user ? getMessagesForUser(user.id) : { received: [], sent: [] };
+
+  // Gather all user IDs from messages to batch-fetch profiles
+  const messageUserIds = useMemo(() => {
+    const ids = new Set<string>();
+    received.forEach(m => ids.add(m.fromUserId));
+    sent.forEach(m => ids.add(m.toUserId));
+    return [...ids];
+  }, [received, sent]);
+
+  const { profiles: messageProfiles } = useProfilesByIds(messageUserIds);
 
   if (loading) return null;
   if (!user) { navigate('/login'); return null; }
 
-  const isVerified = profile?.verification_status ?? false;
+  const isVerified = profile?.verification_status === 'verified';
   const displayName = profile?.full_name || user.email?.split('@')[0] || 'User';
 
-  // Still using localStorage for listings/messages until migrated
-  const myListings = getListingsByUser(user.id);
-  const { received, sent } = getMessagesForUser(user.id);
-
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Remove this listing?')) {
-      deleteListing(id);
+      await supabase.from('dresses').update({ status: 'inactive' }).eq('id', id);
+      setMyListings(prev => prev.filter(l => l.id !== id));
       toast.success('Listing removed');
-      forceUpdate(n => n + 1);
     }
   };
 
@@ -75,26 +103,37 @@ export default function DashboardPage() {
 
           <div className="animate-slide-up">
             {activeTab === 'listings' && (
-              myListings.length === 0 ? (
+              loadingListings ? (
+                <div className="text-center py-16 text-muted-foreground">Loading...</div>
+              ) : myListings.length === 0 ? (
                 <EmptyState icon="✨" title="No listings yet" desc={isVerified ? "List your first dress and reach fellow students!" : "Verify your .edu email to start listing dresses."}>
                   {isVerified && <Link to="/create" className="inline-flex px-6 py-3 rounded-full font-semibold text-primary-foreground" style={{ background: 'var(--gradient-primary)' }}>+ Create Listing</Link>}
                 </EmptyState>
               ) : (
-                myListings.map(l => (
-                  <div key={l.id} className="flex items-center gap-4 p-4 border border-border rounded-2xl mb-2 cursor-pointer hover:border-primary/30 transition-colors" style={{ background: 'var(--gradient-card)' }} onClick={() => navigate(`/listing/${l.id}`)}>
-                    <img src={l.image} alt={l.title} className="w-16 h-20 rounded-lg object-cover bg-surface shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium whitespace-nowrap overflow-hidden text-ellipsis">{l.title}</h4>
-                      <p className="text-xs text-muted-foreground">{l.size} · {l.color} · {l.dressLength} · {l.listingType === 'trade' ? 'Trade' : l.listingType === 'sell-rent' ? `$${l.price} (Buy/Rent)` : `$${l.price}`}</p>
+                myListings.map(l => {
+                  const imageUrl = l.image_urls && l.image_urls.length > 0 ? l.image_urls[0] : '';
+                  const price = l.purchase_price || l.rental_price_per_day || 0;
+                  const typeLabel = l.listing_type === 'both' ? 'Sale/Rent' : l.listing_type === 'rent' ? 'Rent' : 'Sale';
+                  return (
+                    <div key={l.id} className="flex items-center gap-4 p-4 border border-border rounded-2xl mb-2 cursor-pointer hover:border-primary/30 transition-colors" style={{ background: 'var(--gradient-card)' }} onClick={() => navigate(`/listing/${l.id}`)}>
+                      {imageUrl ? (
+                        <img src={imageUrl} alt={l.title} className="w-16 h-20 rounded-lg object-cover bg-surface shrink-0" />
+                      ) : (
+                        <div className="w-16 h-20 rounded-lg bg-surface flex items-center justify-center text-2xl shrink-0">👗</div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium whitespace-nowrap overflow-hidden text-ellipsis">{l.title}</h4>
+                        <p className="text-xs text-muted-foreground">{l.size} · {l.color || '—'} · {typeLabel} · ${price}</p>
+                      </div>
+                      <button
+                        onClick={e => { e.stopPropagation(); handleDelete(l.id); }}
+                        className="px-4 py-2 rounded-full text-xs font-semibold text-destructive bg-destructive/15 border border-destructive/20 hover:bg-destructive/25 transition-all shrink-0"
+                      >
+                        🗑
+                      </button>
                     </div>
-                    <button
-                      onClick={e => { e.stopPropagation(); handleDelete(l.id); }}
-                      className="px-4 py-2 rounded-full text-xs font-semibold text-destructive bg-destructive/15 border border-destructive/20 hover:bg-destructive/25 transition-all shrink-0"
-                    >
-                      🗑
-                    </button>
-                  </div>
-                ))
+                  );
+                })
               )
             )}
 
@@ -102,9 +141,11 @@ export default function DashboardPage() {
               received.length === 0 ? (
                 <EmptyState icon="💌" title="No messages yet" desc="When someone is interested in your listing, their message will appear here." />
               ) : (
-                [...received].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(msg => (
-                  <MessageItem key={msg.id} msg={msg} direction="received" />
-                ))
+                [...received].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(msg => {
+                  const senderProfile = messageProfiles.get(msg.fromUserId);
+                  const otherName = senderProfile?.full_name || 'Unknown User';
+                  return <MessageItem key={msg.id} msg={msg} direction="received" otherName={otherName} />;
+                })
               )
             )}
 
@@ -112,9 +153,11 @@ export default function DashboardPage() {
               sent.length === 0 ? (
                 <EmptyState icon="💌" title="No messages sent" desc="Browse listings and send a message to get started!" />
               ) : (
-                [...sent].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(msg => (
-                  <MessageItem key={msg.id} msg={msg} direction="sent" />
-                ))
+                [...sent].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map(msg => {
+                  const receiverProfile = messageProfiles.get(msg.toUserId);
+                  const otherName = receiverProfile?.full_name || 'Unknown User';
+                  return <MessageItem key={msg.id} msg={msg} direction="sent" otherName={otherName} />;
+                })
               )
             )}
           </div>
@@ -136,9 +179,7 @@ function EmptyState({ icon, title, desc, children }: { icon: string; title: stri
   );
 }
 
-function MessageItem({ msg, direction }: { msg: { id: string; fromUserId: string; toUserId: string; listingId: string; message: string; createdAt: string }; direction: 'received' | 'sent' }) {
-  const other = direction === 'received' ? getUserById(msg.fromUserId) : getUserById(msg.toUserId);
-  const otherName = other ? other.name : 'Unknown User';
+function MessageItem({ msg, direction, otherName }: { msg: { id: string; fromUserId: string; toUserId: string; listingId: string; message: string; createdAt: string }; direction: 'received' | 'sent'; otherName: string }) {
   const listing = getListingById(msg.listingId);
   const listingTitle = listing ? listing.title : 'Removed listing';
 

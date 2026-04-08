@@ -1,26 +1,17 @@
 import { Link } from 'react-router-dom';
-import { getUserById } from '@/lib/store';
-import type { Listing } from '@/lib/store';
+import { useProfileById } from '@/hooks/useProfile';
+import type { DressListing } from '@/lib/types';
+import { LISTING_TYPE_BADGE_STYLES, LISTING_TYPE_LABELS } from '@/lib/types';
 
 interface Props {
-  listing: Listing;
+  listing: DressListing;
   index?: number;
 }
 
 export default function ListingCard({ listing, index = 0 }: Props) {
-  const seller = getUserById(listing.userId);
-  const sellerName = seller ? seller.name : 'Unknown';
-
-  const badgeStyles: Record<string, string> = {
-    sell: 'var(--gradient-badge-sell)',
-    rent: 'var(--gradient-badge-rent)',
-    trade: 'var(--gradient-badge-trade)',
-    'sell-rent': 'var(--gradient-badge-sell-rent)',
-  };
-
-  const badgeLabel: Record<string, string> = {
-    sell: 'Buy', rent: 'Rent', trade: 'Trade', 'sell-rent': 'Buy or Rent',
-  };
+  const { profile: sellerProfile } = useProfileById(listing.owner_id);
+  const sellerName = sellerProfile?.full_name || 'Unknown';
+  const imageUrl = listing.image_urls && listing.image_urls.length > 0 ? listing.image_urls[0] : '';
 
   return (
     <Link
@@ -34,17 +25,21 @@ export default function ListingCard({ listing, index = 0 }: Props) {
       }}
     >
       <div className="relative w-full overflow-hidden bg-surface" style={{ paddingTop: '120%' }}>
-        <img
-          src={listing.image}
-          alt={listing.title}
-          loading="lazy"
-          className="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
-        />
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={listing.title}
+            loading="lazy"
+            className="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+          />
+        ) : (
+          <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-5xl text-muted-foreground">👗</div>
+        )}
         <span
           className="absolute top-2 left-2 px-3 py-1 rounded-full text-[0.7rem] font-bold uppercase tracking-wide text-primary-foreground z-10"
-          style={{ background: badgeStyles[listing.listingType] }}
+          style={{ background: LISTING_TYPE_BADGE_STYLES[listing.listing_type] || LISTING_TYPE_BADGE_STYLES['sale'] }}
          >
-          {badgeLabel[listing.listingType] || listing.listingType}
+          {LISTING_TYPE_LABELS[listing.listing_type] || listing.listing_type}
         </span>
       </div>
       <div className="p-4">
@@ -53,15 +48,15 @@ export default function ListingCard({ listing, index = 0 }: Props) {
         </div>
         <div className="flex items-center gap-2 flex-wrap mb-2">
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.7rem] bg-foreground/5 text-muted-foreground">📏 {listing.size}</span>
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.7rem] bg-foreground/5 text-muted-foreground">🎨 {listing.color}</span>
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.7rem] bg-foreground/5 text-muted-foreground">📐 {listing.dressLength}</span>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.7rem] bg-foreground/5 text-muted-foreground">🎨 {listing.color || '—'}</span>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.7rem] bg-foreground/5 text-muted-foreground">🏷️ {listing.event_type || listing.category}</span>
         </div>
-        {listing.listingType === 'trade' ? (
-          <span className="text-sm text-success font-medium">✨ Open to Trade</span>
-        ) : listing.listingType === 'sell-rent' ? (
-          <span className="text-lg font-bold text-primary-light">${listing.price} <span className="text-xs font-normal text-muted-foreground">buy · ${Math.round(listing.price * 0.3)}/rent</span></span>
+        {listing.listing_type === 'both' ? (
+          <span className="text-lg font-bold text-primary-light">${listing.purchase_price || 0} <span className="text-xs font-normal text-muted-foreground">buy · ${listing.rental_price_per_day || 0}/day rent</span></span>
+        ) : listing.listing_type === 'rent' ? (
+          <span className="text-lg font-bold text-primary-light">${listing.rental_price_per_day || 0}<span className="text-xs font-normal text-muted-foreground">/day</span></span>
         ) : (
-          <span className="text-lg font-bold text-primary-light">${listing.price}</span>
+          <span className="text-lg font-bold text-primary-light">${listing.purchase_price || 0}</span>
         )}
         <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border text-xs text-muted-foreground">
           <span

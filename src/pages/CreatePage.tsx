@@ -14,10 +14,13 @@ export default function CreatePage() {
   const [desc, setDesc] = useState('');
   const [size, setSize] = useState('');
   const [color, setColor] = useState('');
+  const [brand, setBrand] = useState('');
   const [dressLength, setDressLength] = useState('');
   const [eventType, setEventType] = useState('');
   const [listingType, setListingType] = useState('');
   const [price, setPrice] = useState('');
+  const [rentalPrice, setRentalPrice] = useState('');
+  const [pickupLocation, setPickupLocation] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -25,7 +28,7 @@ export default function CreatePage() {
   if (loading) return null;
   if (!user) { navigate('/login'); return null; }
 
-  const isVerified = profile?.verification_status ?? false;
+  const isVerified = profile?.verification_status === 'verified';
 
   if (!isVerified) {
     return (
@@ -57,7 +60,6 @@ export default function CreatePage() {
     reader.readAsDataURL(file);
   };
 
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -67,9 +69,8 @@ export default function CreatePage() {
 
     setSubmitting(true);
 
-    const mappedListingType = listingType === 'sell-rent' ? 'sell' : listingType;
-    const purchasePrice = (listingType === 'sell' || listingType === 'sell-rent') ? (parseInt(price) || 0) : null;
-    const rentalPrice = (listingType === 'rent' || listingType === 'sell-rent') ? (parseInt(price) || 0) : null;
+    const purchasePrice = (listingType === 'sale' || listingType === 'both') ? (parseInt(price) || 0) : null;
+    const rentalPriceVal = (listingType === 'rent' || listingType === 'both') ? (parseInt(rentalPrice || price) || 0) : null;
 
     const { data, error: insertError } = await supabase
       .from('dresses')
@@ -79,13 +80,17 @@ export default function CreatePage() {
         description: desc,
         size,
         color,
-        category: eventType,
-        listing_type: mappedListingType,
+        brand: brand.trim() || null,
+        event_type: eventType,
+        category: eventType, // keep category in sync for backward compat
+        listing_type: listingType,
         purchase_price: purchasePrice,
-        rental_price_per_day: rentalPrice,
+        rental_price_per_day: rentalPriceVal,
         image_urls: photoData ? [photoData] : [],
         university: profile?.university || '',
-        condition: 'Good',
+        pickup_location_general: pickupLocation.trim() || null,
+        condition: dressLength, // store dress length in condition for now
+        status: 'available',
       })
       .select()
       .single();
@@ -111,7 +116,7 @@ export default function CreatePage() {
         <div className="container">
           <div className="border border-border rounded-3xl p-8 max-w-[680px] mx-auto animate-fade-in" style={{ background: 'var(--gradient-card)' }}>
             <h1 className="text-xl font-bold mb-1">Create a Listing</h1>
-            <p className="text-sm text-muted-foreground mb-8">List your dress for sale, rent, or trade</p>
+            <p className="text-sm text-muted-foreground mb-8">List your dress for sale or rent</p>
 
             <form onSubmit={handleSubmit}>
               <div className="mb-6">
@@ -179,20 +184,38 @@ export default function CreatePage() {
 
               <div className="grid grid-cols-2 gap-4 mb-6 max-[480px]:grid-cols-1">
                 <div>
-                  <label className="block text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Listing Type</label>
-                  <select value={listingType} onChange={e => setListingType(e.target.value)} className={selectClass} required>
-                    <option value="">Select type</option>
-                    <option value="sell">Sell</option>
-                    <option value="rent">Rent</option>
-                    <option value="sell-rent">Sell or Rent</option>
-                    <option value="trade">Trade</option>
-                  </select>
+                  <label className="block text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Brand <span className="normal-case font-normal">(optional)</span></label>
+                  <input value={brand} onChange={e => setBrand(e.target.value)} placeholder="e.g. Lulus, ASOS" className={inputClass} />
                 </div>
-                <div style={{ opacity: listingType === 'trade' ? 0.3 : 1 }}>
-                  <label className="block text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Price ($)</label>
-                  <input type="number" value={listingType === 'trade' ? '0' : price} onChange={e => setPrice(e.target.value)} disabled={listingType === 'trade'} placeholder="0" min="0" className={inputClass} />
+                <div>
+                  <label className="block text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Pickup Area <span className="normal-case font-normal">(optional)</span></label>
+                  <input value={pickupLocation} onChange={e => setPickupLocation(e.target.value)} placeholder="e.g. North Campus" className={inputClass} />
                 </div>
               </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Listing Type</label>
+                <select value={listingType} onChange={e => setListingType(e.target.value)} className={selectClass} required>
+                  <option value="">Select type</option>
+                  <option value="sale">Sell</option>
+                  <option value="rent">Rent</option>
+                  <option value="both">Sell or Rent</option>
+                </select>
+              </div>
+
+              {(listingType === 'sale' || listingType === 'both') && (
+                <div className="mb-6">
+                  <label className="block text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Sale Price ($)</label>
+                  <input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="0" min="0" className={inputClass} />
+                </div>
+              )}
+
+              {(listingType === 'rent' || listingType === 'both') && (
+                <div className="mb-6">
+                  <label className="block text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Rental Price ($/day)</label>
+                  <input type="number" value={rentalPrice} onChange={e => setRentalPrice(e.target.value)} placeholder="0" min="0" className={inputClass} />
+                </div>
+              )}
 
               {error && <p className="text-xs text-destructive mb-4">{error}</p>}
 

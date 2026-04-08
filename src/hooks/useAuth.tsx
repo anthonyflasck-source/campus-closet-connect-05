@@ -5,10 +5,13 @@ import type { User, Session } from '@supabase/supabase-js';
 interface Profile {
   id: string;
   full_name: string;
+  email: string;
   bio: string;
   avatar_url: string;
   university: string;
-  verification_status: boolean;
+  username: string | null;
+  verification_status: string;
+  last_active_at: string | null;
 }
 
 interface AuthContextType {

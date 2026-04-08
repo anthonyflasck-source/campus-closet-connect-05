@@ -16,55 +16,67 @@ export type Database = {
     Tables: {
       dresses: {
         Row: {
+          brand: string | null
           category: string
           color: string | null
           condition: string | null
           created_at: string
           description: string | null
+          event_type: string | null
           id: string
           image_urls: string[] | null
           is_available: boolean
           listing_type: string
           owner_id: string
+          pickup_location_general: string | null
           purchase_price: number | null
           rental_price_per_day: number | null
           size: string
+          status: string
           title: string
           university: string | null
           updated_at: string
         }
         Insert: {
+          brand?: string | null
           category?: string
           color?: string | null
           condition?: string | null
           created_at?: string
           description?: string | null
+          event_type?: string | null
           id?: string
           image_urls?: string[] | null
           is_available?: boolean
           listing_type?: string
           owner_id: string
+          pickup_location_general?: string | null
           purchase_price?: number | null
           rental_price_per_day?: number | null
           size: string
+          status?: string
           title: string
           university?: string | null
           updated_at?: string
         }
         Update: {
+          brand?: string | null
           category?: string
           color?: string | null
           condition?: string | null
           created_at?: string
           description?: string | null
+          event_type?: string | null
           id?: string
           image_urls?: string[] | null
           is_available?: boolean
           listing_type?: string
           owner_id?: string
+          pickup_location_general?: string | null
           purchase_price?: number | null
           rental_price_per_day?: number | null
           size?: string
+          status?: string
           title?: string
           university?: string | null
           updated_at?: string
@@ -82,24 +94,36 @@ export type Database = {
       orders: {
         Row: {
           buyer_id: string
+          created_at: string
           dress_id: string
           final_price: number
           id: string
           purchased_at: string
+          seller_id: string
+          status: string
+          updated_at: string
         }
         Insert: {
           buyer_id: string
+          created_at?: string
           dress_id: string
           final_price: number
           id?: string
           purchased_at?: string
+          seller_id: string
+          status?: string
+          updated_at?: string
         }
         Update: {
           buyer_id?: string
+          created_at?: string
           dress_id?: string
           final_price?: number
           id?: string
           purchased_at?: string
+          seller_id?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -116,6 +140,13 @@ export type Database = {
             referencedRelation: "dresses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "orders_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       profiles: {
@@ -123,31 +154,40 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string
+          email: string
           full_name: string
           id: string
+          last_active_at: string | null
           university: string | null
           updated_at: string
-          verification_status: boolean
+          username: string | null
+          verification_status: string
         }
         Insert: {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          email: string
           full_name?: string
           id: string
+          last_active_at?: string | null
           university?: string | null
           updated_at?: string
-          verification_status?: boolean
+          username?: string | null
+          verification_status?: string
         }
         Update: {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          email?: string
           full_name?: string
           id?: string
+          last_active_at?: string | null
           university?: string | null
           updated_at?: string
-          verification_status?: boolean
+          username?: string | null
+          verification_status?: string
         }
         Relationships: []
       }
@@ -157,6 +197,7 @@ export type Database = {
           dress_id: string
           end_date: string
           id: string
+          owner_id: string
           renter_id: string
           start_date: string
           status: string
@@ -168,6 +209,7 @@ export type Database = {
           dress_id: string
           end_date: string
           id?: string
+          owner_id: string
           renter_id: string
           start_date: string
           status?: string
@@ -179,6 +221,7 @@ export type Database = {
           dress_id?: string
           end_date?: string
           id?: string
+          owner_id?: string
           renter_id?: string
           start_date?: string
           status?: string
@@ -191,6 +234,13 @@ export type Database = {
             columns: ["dress_id"]
             isOneToOne: false
             referencedRelation: "dresses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rentals_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {

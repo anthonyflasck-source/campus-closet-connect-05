@@ -1,36 +1,50 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ListingCard from '@/components/ListingCard';
-import { getListings } from '@/lib/store';
-import type { Listing } from '@/lib/store';
+import { supabase } from '@/integrations/supabase/client';
+import type { DressListing } from '@/lib/types';
 
 export default function ExplorePage() {
-  const listings = getListings();
+  const [listings, setListings] = useState<DressListing[]>([]);
+  const [loadingListings, setLoadingListings] = useState(true);
   const [filters, setFilters] = useState({
-    search: '', size: '', color: '', length: '', event: '', type: '', price: '',
+    search: '', size: '', color: '', event: '', type: '', price: '',
   });
+
+  // Fetch listings from Supabase
+  useEffect(() => {
+    supabase
+      .from('dresses')
+      .select('*')
+      .eq('status', 'available')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        setListings((data as DressListing[]) || []);
+        setLoadingListings(false);
+      });
+  }, []);
 
   const updateFilter = useCallback((key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   }, []);
 
   const clearFilters = () => {
-    setFilters({ search: '', size: '', color: '', length: '', event: '', type: '', price: '' });
+    setFilters({ search: '', size: '', color: '', event: '', type: '', price: '' });
   };
 
-  const filtered = listings.filter((l: Listing) => {
-    if (filters.search && !l.title.toLowerCase().includes(filters.search.toLowerCase()) && !l.description.toLowerCase().includes(filters.search.toLowerCase())) return false;
+  const filtered = listings.filter((l) => {
+    const price = l.purchase_price || l.rental_price_per_day || 0;
+    if (filters.search && !l.title.toLowerCase().includes(filters.search.toLowerCase()) && !(l.description || '').toLowerCase().includes(filters.search.toLowerCase())) return false;
     if (filters.size && l.size !== filters.size) return false;
     if (filters.color && l.color !== filters.color) return false;
-    if (filters.length && l.dressLength !== filters.length) return false;
-    if (filters.event && l.eventType !== filters.event) return false;
-    if (filters.type && l.listingType !== filters.type && !(filters.type === 'sell' && l.listingType === 'sell-rent') && !(filters.type === 'rent' && l.listingType === 'sell-rent')) return false;
+    if (filters.event && (l.event_type || l.category) !== filters.event) return false;
+    if (filters.type && l.listing_type !== filters.type && !(filters.type === 'sale' && l.listing_type === 'both') && !(filters.type === 'rent' && l.listing_type === 'both')) return false;
     if (filters.price) {
-      if (filters.price === '0-25' && l.price > 25) return false;
-      if (filters.price === '25-50' && (l.price < 25 || l.price > 50)) return false;
-      if (filters.price === '50-100' && (l.price < 50 || l.price > 100)) return false;
-      if (filters.price === '100+' && l.price < 100) return false;
+      if (filters.price === '0-25' && price > 25) return false;
+      if (filters.price === '25-50' && (price < 25 || price > 50)) return false;
+      if (filters.price === '50-100' && (price < 50 || price > 100)) return false;
+      if (filters.price === '100+' && price < 100) return false;
     }
     return true;
   });
@@ -67,20 +81,15 @@ export default function ExplorePage() {
               <option value="">All Colors</option>
               {['Black','Blue','Gold','Green','Navy','Pink','Purple','Red','Rose','White'].map(c => <option key={c} value={c}>{c}</option>)}
             </select>
-            <select value={filters.length} onChange={e => updateFilter('length', e.target.value)} className={selectClass}>
-              <option value="">All Lengths</option>
-              {['Short','Midi','Long'].map(l => <option key={l} value={l}>{l}</option>)}
-            </select>
             <select value={filters.event} onChange={e => updateFilter('event', e.target.value)} className={selectClass}>
               <option value="">All Events</option>
               {['Formal','Semi-Formal','Date Party','Mixer'].map(e => <option key={e} value={e}>{e}</option>)}
             </select>
             <select value={filters.type} onChange={e => updateFilter('type', e.target.value)} className={selectClass}>
               <option value="">All Types</option>
-              <option value="sell">Buy</option>
+              <option value="sale">Buy</option>
               <option value="rent">Rent</option>
-              <option value="trade">Trade</option>
-              <option value="sell-rent">Buy or Rent</option>
+              <option value="both">Buy or Rent</option>
             </select>
             <select value={filters.price} onChange={e => updateFilter('price', e.target.value)} className={selectClass}>
               <option value="">Any Price</option>
@@ -101,7 +110,9 @@ export default function ExplorePage() {
             Showing {filtered.length} of {listings.length} listings
           </p>
 
-          {filtered.length === 0 ? (
+          {loadingListings ? (
+            <div className="text-center py-16 text-muted-foreground">Loading listings...</div>
+          ) : filtered.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
               <div className="text-5xl mb-4 opacity-50">👗</div>
               <h3 className="text-lg mb-2 text-foreground">No dresses found</h3>

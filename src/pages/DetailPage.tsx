@@ -1,18 +1,51 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/hooks/useAuth';
-import { getListingById, getUserById, deleteListing, sendMessage, formatDate } from '@/lib/store';
+import { useProfileById } from '@/hooks/useProfile';
+import { supabase } from '@/integrations/supabase/client';
+import type { DressListing } from '@/lib/types';
+import { LISTING_TYPE_BADGE_STYLES, LISTING_TYPE_LABELS } from '@/lib/types';
+import { formatDate, sendMessage } from '@/lib/store';
 import { toast } from 'sonner';
 
 export default function DetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const listing = getListingById(id || '');
+  const [listing, setListing] = useState<DressListing | null>(null);
+  const [loadingListing, setLoadingListing] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [msgText, setMsgText] = useState('');
+
+  // Fetch listing from Supabase
+  useEffect(() => {
+    if (!id) return;
+    supabase
+      .from('dresses')
+      .select('*')
+      .eq('id', id)
+      .single()
+      .then(({ data }) => {
+        setListing(data as DressListing | null);
+        setLoadingListing(false);
+      });
+  }, [id]);
+
+  // Fetch seller profile from Supabase
+  const { profile: sellerProfile } = useProfileById(listing?.owner_id);
+
+  if (loadingListing) {
+    return (
+      <>
+        <Navbar />
+        <main className="pt-20 min-h-screen flex items-center justify-center">
+          <div className="text-muted-foreground">Loading...</div>
+        </main>
+      </>
+    );
+  }
 
   if (!listing) {
     return (
@@ -32,24 +65,14 @@ export default function DetailPage() {
     );
   }
 
-  const seller = getUserById(listing.userId);
-  const sellerName = seller ? seller.name : 'Unknown';
-  const isOwner = user && user.id === listing.userId;
+  const sellerName = sellerProfile?.full_name || 'Unknown';
+  const isOwner = user && user.id === listing.owner_id;
+  const imageUrl = listing.image_urls && listing.image_urls.length > 0 ? listing.image_urls[0] : '';
+  const eventLabel = listing.event_type || listing.category;
 
-  const badgeStyles: Record<string, string> = {
-    sell: 'var(--gradient-badge-sell)',
-    rent: 'var(--gradient-badge-rent)',
-    trade: 'var(--gradient-badge-trade)',
-    'sell-rent': 'var(--gradient-badge-sell-rent)',
-  };
-
-  const badgeLabel: Record<string, string> = {
-    sell: 'Buy', rent: 'Rent', trade: 'Trade', 'sell-rent': 'Buy or Rent',
-  };
-
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (confirm('Remove this listing? This cannot be undone.')) {
-      deleteListing(listing.id);
+      await supabase.from('dresses').update({ status: 'inactive' }).eq('id', listing.id);
       toast.success('Listing removed');
       navigate('/');
     }
@@ -58,7 +81,8 @@ export default function DetailPage() {
   const handleSendMessage = () => {
     if (!msgText.trim()) { toast.error('Please write a message'); return; }
     if (!user) { toast.error('Please sign in'); navigate('/login'); return; }
-    sendMessage(user.id, listing.userId, listing.id, msgText.trim());
+    // Messages still go to localStorage until the messages table is migrated
+    sendMessage(user.id, listing.owner_id, listing.id, msgText.trim());
     setShowModal(false);
     setMsgText('');
     toast.success('Message sent! The seller will see it in their dashboard.');
@@ -69,7 +93,7 @@ export default function DetailPage() {
     setShowModal(true);
   };
 
-  const contactLabel = listing.listingType === 'trade' ? 'Propose a Trade' : listing.listingType === 'rent' ? 'Request to Rent' : listing.listingType === 'sell-rent' ? 'Buy or Rent' : 'Contact Seller';
+  const contactLabel = listing.listing_type === 'rent' ? 'Request to Rent' : listing.listing_type === 'both' ? 'Buy or Rent' : 'Contact Seller';
 
   return (
     <>
@@ -82,26 +106,32 @@ export default function DetailPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-16 animate-fade-in">
             <div className="rounded-3xl overflow-hidden bg-surface border border-border">
-              <img src={listing.image} alt={listing.title} className="w-full aspect-[3/4] object-cover" />
+              {imageUrl ? (
+                <img src={imageUrl} alt={listing.title} className="w-full aspect-[3/4] object-cover" />
+              ) : (
+                <div className="w-full aspect-[3/4] flex items-center justify-center text-5xl text-muted-foreground bg-surface">👗</div>
+              )}
             </div>
 
             <div className="py-4">
-              <span className="inline-block px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide text-primary-foreground mb-4" style={{ background: badgeStyles[listing.listingType] }}>
-                {badgeLabel[listing.listingType] || listing.listingType}
+              <span className="inline-block px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide text-primary-foreground mb-4" style={{ background: LISTING_TYPE_BADGE_STYLES[listing.listing_type] || LISTING_TYPE_BADGE_STYLES['sale'] }}>
+                {LISTING_TYPE_LABELS[listing.listing_type] || listing.listing_type}
               </span>
 
               <h1 className="text-2xl md:text-3xl font-extrabold mb-2 leading-tight">{listing.title}</h1>
 
-              {listing.listingType === 'trade' ? (
-                <div className="text-lg font-bold text-success mb-6">✨ Open to Trade</div>
-              ) : listing.listingType === 'sell-rent' ? (
+              {listing.listing_type === 'both' ? (
                 <div className="mb-6">
-                  <div className="text-xl font-bold text-primary-light mb-1">${listing.price} <span className="text-sm font-normal text-muted-foreground">to buy</span></div>
-                  <div className="text-base font-semibold text-accent">${Math.round(listing.price * 0.3)}/event <span className="text-sm font-normal text-muted-foreground">to rent</span></div>
+                  <div className="text-xl font-bold text-primary-light mb-1">${listing.purchase_price || 0} <span className="text-sm font-normal text-muted-foreground">to buy</span></div>
+                  <div className="text-base font-semibold text-accent">${listing.rental_price_per_day || 0}/day <span className="text-sm font-normal text-muted-foreground">to rent</span></div>
+                </div>
+              ) : listing.listing_type === 'rent' ? (
+                <div className="text-xl font-bold text-primary-light mb-6">
+                  ${listing.rental_price_per_day || 0}/day
                 </div>
               ) : (
                 <div className="text-xl font-bold text-primary-light mb-6">
-                  {listing.listingType === 'rent' ? `$${listing.price}/event` : `$${listing.price}`}
+                  ${listing.purchase_price || 0}
                 </div>
               )}
 
@@ -110,9 +140,11 @@ export default function DetailPage() {
               <div className="grid grid-cols-2 gap-4 mb-8">
                 {[
                   { label: 'Size', value: listing.size },
-                  { label: 'Color', value: listing.color },
-                  { label: 'Length', value: listing.dressLength },
-                  { label: 'Event Type', value: listing.eventType },
+                  { label: 'Color', value: listing.color || '—' },
+                  { label: 'Condition', value: listing.condition || '—' },
+                  { label: 'Event Type', value: eventLabel },
+                  ...(listing.brand ? [{ label: 'Brand', value: listing.brand }] : []),
+                  ...(listing.pickup_location_general ? [{ label: 'Pickup Area', value: listing.pickup_location_general }] : []),
                 ].map(spec => (
                   <div key={spec.label} className="bg-foreground/[0.03] border border-border rounded-lg p-4">
                     <div className="text-xs text-muted-foreground uppercase tracking-wide mb-0.5">{spec.label}</div>
@@ -127,7 +159,7 @@ export default function DetailPage() {
                 </div>
                 <div>
                   <div className="font-semibold">{sellerName}</div>
-                  <div className="text-xs text-muted-foreground">Listed {formatDate(listing.createdAt)}</div>
+                  <div className="text-xs text-muted-foreground">Listed {formatDate(listing.created_at)}</div>
                 </div>
               </div>
 
