@@ -125,3 +125,14 @@ export async function sendConversationMessage(input: SendMessageInput) {
     message: data as ChatMessage,
   };
 }
+
+export async function markMessagesAsRead(conversationId: string, userId: string) {
+  const { error } = await (supabase
+    .from('messages') as any)
+    .update({ is_read: true })
+    .eq('conversation_id', conversationId)
+    .eq('recipient_id', userId)
+    .eq('is_read', false);
+
+  if (error) throw error;
+}
