@@ -6,8 +6,9 @@ import { AuthProvider } from "@/hooks/useAuth";
 import ExplorePage from "./pages/ExplorePage";
 import DetailPage from "./pages/DetailPage";
 import AuthPage from "./pages/AuthPage";
+import AuthCallbackPage from "./pages/AuthCallbackPage";
 import CreatePage from "./pages/CreatePage";
-import DashboardPage from "./pages/DashboardPage";
+import DashboardPage from "./pages/DashboardPageSecure";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
             <Route path="/" element={<ExplorePage />} />
             <Route path="/listing/:id" element={<DetailPage />} />
             <Route path="/login" element={<AuthPage />} />
+            <Route path="/auth/callback" element={<AuthCallbackPage />} />
             <Route path="/create" element={<CreatePage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="*" element={<NotFound />} />
