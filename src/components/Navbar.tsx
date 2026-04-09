@@ -1,12 +1,14 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useUnreadCount } from '@/hooks/useUnreadCount';
 
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const unreadCount = useUnreadCount();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -60,11 +62,16 @@ export default function Navbar() {
               </Link>
               <Link
                 to="/dashboard"
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   isActive('/dashboard') ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5'
                 }`}
               >
                 Dashboard
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold text-primary-foreground px-1" style={{ background: 'var(--gradient-primary)' }}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </Link>
               <button
                 onClick={handleLogout}
@@ -95,7 +102,14 @@ export default function Navbar() {
           {user ? (
             <>
               <Link to="/create" onClick={() => setMenuOpen(false)} className="w-full text-center py-3 rounded-full text-sm font-medium text-muted-foreground">+ List Item</Link>
-              <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="w-full text-center py-3 rounded-full text-sm font-medium text-muted-foreground">Dashboard</Link>
+              <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="relative w-full text-center py-3 rounded-full text-sm font-medium text-muted-foreground">
+                Dashboard
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-4 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold text-primary-foreground px-1" style={{ background: 'var(--gradient-primary)' }}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </Link>
               <button onClick={handleLogout} className="w-full text-center py-3 rounded-full text-sm font-medium text-muted-foreground">Sign Out</button>
             </>
           ) : (
