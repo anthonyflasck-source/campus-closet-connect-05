@@ -8,6 +8,7 @@ import DetailPage from "./pages/DetailPage";
 import AuthPage from "./pages/AuthPage";
 import AuthCallbackPage from "./pages/AuthCallbackPage";
 import CreatePage from "./pages/CreatePage";
+import EditListingPage from "./pages/EditListingPage";
 import DashboardPage from "./pages/DashboardPageSecure";
 import NotFound from "./pages/NotFound";
 
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/login" element={<AuthPage />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
             <Route path="/create" element={<CreatePage />} />
+            <Route path="/edit/:id" element={<EditListingPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="*" element={<NotFound />} />
             <Route path="*" element={<NotFound />} />
