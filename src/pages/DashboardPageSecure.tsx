@@ -154,19 +154,23 @@ export default function DashboardPageSecure() {
     let cancelled = false;
     setLoadingMessages(true);
 
-    fetchConversationMessages(selectedConversationId)
-      .then(data => {
+    (async () => {
+      try {
+        const [data] = await Promise.all([
+          fetchConversationMessages(selectedConversationId),
+          markMessagesAsRead(selectedConversationId, user.id),
+        ]);
         if (!cancelled) {
           setMessages(data);
           setLoadingMessages(false);
         }
-      })
-      .catch(error => {
+      } catch (error) {
         if (!cancelled) {
           setLoadingMessages(false);
-          toast.error(error.message);
+          if (error instanceof Error) toast.error(error.message);
         }
-      });
+      }
+    })();
 
     return () => {
       cancelled = true;
