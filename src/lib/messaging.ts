@@ -34,6 +34,12 @@ interface MessageInsertPayload {
   body: string;
 }
 
+type MessageInsertRow = {
+  conversation_id: string;
+  sender_id: string;
+  body: string;
+};
+
 function getRecipientId(input: Pick<SendMessageInput, 'buyerId' | 'sellerId' | 'senderId'>) {
   if (input.senderId === input.buyerId) return input.sellerId;
   if (input.senderId === input.sellerId) return input.buyerId;
@@ -105,7 +111,7 @@ export async function sendConversationMessage(input: SendMessageInput) {
 
   const { data, error } = await supabase
     .from('messages')
-    .insert(messagePayload)
+    .insert(messagePayload as unknown as MessageInsertRow)
     .select('*')
     .single();
 
