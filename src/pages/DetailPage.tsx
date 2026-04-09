@@ -69,7 +69,9 @@ export default function DetailPage() {
 
   const sellerName = sellerProfile?.full_name || 'Unknown';
   const isOwner = user && user.id === listing.owner_id;
-  const imageUrl = listing.image_urls && listing.image_urls.length > 0 ? listing.image_urls[0] : '';
+  const images = listing.image_urls && listing.image_urls.length > 0 ? listing.image_urls : [];
+  const [currentImg, setCurrentImg] = useState(0);
+  const hasMultiple = images.length > 1;
   const eventLabel = listing.event_type || listing.category;
 
   const handleDelete = async () => {
