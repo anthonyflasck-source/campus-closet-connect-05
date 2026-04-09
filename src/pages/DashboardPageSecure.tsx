@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProfilesByIds } from '@/hooks/useProfile';
 import { supabase } from '@/integrations/supabase/client';
 import type { DressListing } from '@/lib/types';
-import { fetchConversationMessages, fetchUserConversations, sendConversationMessage, type ChatMessage, type Conversation } from '@/lib/messaging';
+import { fetchConversationMessages, fetchUserConversations, sendConversationMessage, markMessagesAsRead, type ChatMessage, type Conversation } from '@/lib/messaging';
 import { formatDate } from '@/lib/store';
 import { toast } from 'sonner';
 
