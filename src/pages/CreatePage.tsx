@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 
 export default function CreatePage() {
   const navigate = useNavigate();
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, isSchoolEmailVerified } = useAuth();
   const [photoData, setPhotoData] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
@@ -28,7 +28,7 @@ export default function CreatePage() {
   if (loading) return null;
   if (!user) { navigate('/login'); return null; }
 
-  const isVerified = profile?.verification_status === 'verified';
+  const isVerified = isSchoolEmailVerified;
 
   if (!isVerified) {
     return (
@@ -39,7 +39,7 @@ export default function CreatePage() {
             <div className="text-5xl mb-4">⏳</div>
             <h1 className="text-xl font-bold mb-2">Verification Required</h1>
             <p className="text-sm text-muted-foreground mb-4">
-              You need a verified .edu email to create listings. Sign up with your university email to get instant verification.
+              You need a confirmed .edu email to create listings. After signing up, click the link in your verification email and then come back here.
             </p>
             <button onClick={() => navigate('/dashboard')} className="px-6 py-3 rounded-full font-semibold text-primary-foreground" style={{ background: 'var(--gradient-primary)' }}>
               Go to Dashboard

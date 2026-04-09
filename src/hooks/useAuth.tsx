@@ -19,7 +19,8 @@ interface AuthContextType {
   profile: Profile | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: string | null }>;
+  isSchoolEmailVerified: boolean;
+  signUp: (email: string, password: string, fullName: string) => Promise<{ error: string | null; needsEmailConfirmation: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -46,6 +47,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user) await fetchProfile(user.id);
   };
 
+  const isSchoolEmailVerified = Boolean(
+    user?.email &&
+    user.email.toLowerCase().endsWith('.edu') &&
+    user.email_confirmed_at
+  );
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -67,14 +74,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, fullName: string) => {
     if (!email.toLowerCase().endsWith('.edu')) {
-      return { error: 'Only .edu email addresses are allowed. Please use your university email.' };
+      return {
+        error: 'Only .edu email addresses are allowed. Please use your university email.',
+        needsEmailConfirmation: false,
+      };
     }
-    const { error } = await supabase.auth.signUp({
+
+    const emailRedirectTo = `${window.location.origin}/auth/callback`;
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName } },
+      options: {
+        data: { full_name: fullName },
+        emailRedirectTo,
+      },
     });
-    return { error: error?.message ?? null };
+    return {
+      error: error?.message ?? null,
+      needsEmailConfirmation: !error && !data.session,
+    };
   };
 
   const signIn = async (email: string, password: string) => {
@@ -88,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, session, loading, signUp, signIn, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, session, loading, isSchoolEmailVerified, signUp, signIn, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

@@ -12,6 +12,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [signupEmail, setSignupEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   if (!loading && user) { navigate('/'); return null; }
@@ -30,11 +31,17 @@ export default function AuthPage() {
       }
     } else {
       if (!name.trim()) { setError('Please enter your name'); setSubmitting(false); return; }
-      const { error } = await signUp(email, password, name.trim());
-      if (error) { setError(error); setSubmitting(false); }
+      const result = await signUp(email, password, name.trim());
+      if (result.error) { setError(result.error); setSubmitting(false); }
       else {
         toast.success('Account created! Welcome to CampusCloset 🎉');
-        navigate('/');
+        setSignupEmail(email);
+        setSubmitting(false);
+        if (result.needsEmailConfirmation) {
+          toast.success('Account created. Check your inbox to confirm your email.');
+        } else {
+          navigate('/');
+        }
       }
     }
   };
@@ -49,6 +56,12 @@ export default function AuthPage() {
           <div className="text-center text-3xl mb-4">👗</div>
           <h1 className="text-xl font-bold text-center mb-1">{isLogin ? 'Welcome Back' : 'Join CampusCloset'}</h1>
           <p className="text-center text-sm text-muted-foreground mb-8">{isLogin ? 'Sign in to your account' : 'Create your free account'}</p>
+
+          {!isLogin && signupEmail && (
+            <div className="mb-6 p-3 rounded-lg bg-primary/5 border border-primary/20 text-sm text-muted-foreground">
+              We created your account for <strong className="text-foreground">{signupEmail}</strong>. Open the verification email, then you will be redirected back to CampusCloset automatically.
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             {!isLogin && (
@@ -80,7 +93,7 @@ export default function AuthPage() {
 
           <div className="text-center mt-6 text-sm text-muted-foreground">
             {isLogin ? "Don't have an account? " : "Already have an account? "}
-            <button onClick={() => { setIsLogin(!isLogin); setError(''); }} className="text-primary font-semibold hover:underline cursor-pointer">
+            <button onClick={() => { setIsLogin(!isLogin); setError(''); setSignupEmail(''); }} className="text-primary font-semibold hover:underline cursor-pointer">
               {isLogin ? 'Sign Up' : 'Sign In'}
             </button>
           </div>

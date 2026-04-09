@@ -7,13 +7,14 @@ import { useProfileById } from '@/hooks/useProfile';
 import { supabase } from '@/integrations/supabase/client';
 import type { DressListing } from '@/lib/types';
 import { LISTING_TYPE_BADGE_STYLES, LISTING_TYPE_LABELS } from '@/lib/types';
-import { formatDate, sendMessage } from '@/lib/store';
+import { formatDate } from '@/lib/store';
+import { sendConversationMessage } from '@/lib/messaging';
 import { toast } from 'sonner';
 
 export default function DetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isSchoolEmailVerified } = useAuth();
   const [listing, setListing] = useState<DressListing | null>(null);
   const [loadingListing, setLoadingListing] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -78,18 +79,41 @@ export default function DetailPage() {
     }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!msgText.trim()) { toast.error('Please write a message'); return; }
     if (!user) { toast.error('Please sign in'); navigate('/login'); return; }
-    // Messages still go to localStorage until the messages table is migrated
-    sendMessage(user.id, listing.owner_id, listing.id, msgText.trim());
+    if (!isSchoolEmailVerified) {
+      toast.error('Verify your school email before messaging sellers');
+      navigate('/dashboard');
+      return;
+    }
+
+    try {
+      await sendConversationMessage({
+        listingId: listing.id,
+        buyerId: user.id,
+        sellerId: listing.owner_id,
+        senderId: user.id,
+        body: msgText.trim(),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to send message';
+      toast.error(message);
+      return;
+    }
+
     setShowModal(false);
     setMsgText('');
-    toast.success('Message sent! The seller will see it in their dashboard.');
+    toast.success('Message sent! The seller can reply in their dashboard.');
   };
 
   const handleContact = () => {
     if (!user) { toast.error('Please sign in to send a message'); navigate('/login'); return; }
+    if (!isSchoolEmailVerified) {
+      toast.error('Verify your school email before messaging sellers');
+      navigate('/dashboard');
+      return;
+    }
     setShowModal(true);
   };
 
