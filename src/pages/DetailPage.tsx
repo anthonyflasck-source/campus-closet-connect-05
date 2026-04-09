@@ -122,6 +122,10 @@ export default function DetailPage() {
       navigate('/dashboard');
       return;
     }
+    if (user.id === listing.owner_id) {
+      toast.error("You can't message yourself");
+      return;
+    }
     setShowModal(true);
   };
 
