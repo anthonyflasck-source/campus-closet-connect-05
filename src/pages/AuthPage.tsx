@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export default function AuthPage() {
@@ -16,6 +17,22 @@ export default function AuthPage() {
   const [submitting, setSubmitting] = useState(false);
 
   if (!loading && user) { navigate('/'); return null; }
+
+  const [forgotMode, setForgotMode] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!email) { setError('Please enter your email.'); return; }
+    setSubmitting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setSubmitting(false);
+    if (error) { setError(error.message); }
+    else { setResetSent(true); }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
