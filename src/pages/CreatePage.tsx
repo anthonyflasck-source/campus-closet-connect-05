@@ -52,13 +52,26 @@ export default function CreatePage() {
   }
 
   const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error('Image too large (max 5MB)'); return; }
-    const reader = new FileReader();
-    reader.onload = ev => setPhotoData(ev.target?.result as string);
-    reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (!files) return;
+    const newPhotos: string[] = [];
+    const remaining = 5 - photos.length;
+    const toProcess = Array.from(files).slice(0, remaining);
+    if (toProcess.length < files.length) toast.error(`Max 5 photos — only adding ${toProcess.length}`);
+    let loaded = 0;
+    toProcess.forEach(file => {
+      if (file.size > 5 * 1024 * 1024) { toast.error(`${file.name} too large (max 5MB)`); loaded++; return; }
+      const reader = new FileReader();
+      reader.onload = ev => {
+        newPhotos.push(ev.target?.result as string);
+        loaded++;
+        if (loaded === toProcess.length) setPhotos(prev => [...prev, ...newPhotos]);
+      };
+      reader.readAsDataURL(file);
+    });
   };
+
+  const removePhoto = (index: number) => setPhotos(prev => prev.filter((_, i) => i !== index));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
