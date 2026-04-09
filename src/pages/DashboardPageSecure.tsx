@@ -467,16 +467,23 @@ function ConversationThread({
         ) : messages.length === 0 ? (
           <div className="text-center text-muted-foreground py-10">No messages in this conversation yet.</div>
         ) : (
-          messages.map(message => (
-            <div key={message.id} className={`flex ${message.sender_id === currentUserId ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${message.sender_id === currentUserId ? 'text-primary-foreground' : 'bg-foreground/[0.05] text-foreground'}`} style={message.sender_id === currentUserId ? { background: 'var(--gradient-primary)' } : undefined}>
-                <div className="text-sm leading-relaxed whitespace-pre-wrap">{message.body}</div>
-                <div className={`text-xs mt-2 ${message.sender_id === currentUserId ? 'text-primary-foreground/75' : 'text-muted-foreground'}`}>
-                  {formatDate(message.created_at)}
+          messages.map((message, index) => {
+            const isMine = message.sender_id === currentUserId;
+            const isLastMine = isMine && !messages.slice(index + 1).some(m => m.sender_id === currentUserId);
+            return (
+              <div key={message.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${isMine ? 'text-primary-foreground' : 'bg-foreground/[0.05] text-foreground'}`} style={isMine ? { background: 'var(--gradient-primary)' } : undefined}>
+                  <div className="text-sm leading-relaxed whitespace-pre-wrap">{message.body}</div>
+                  <div className={`flex items-center gap-2 text-xs mt-2 ${isMine ? 'text-primary-foreground/75' : 'text-muted-foreground'}`}>
+                    <span>{formatDate(message.created_at)}</span>
+                    {isMine && isLastMine && (
+                      <span className="font-medium">{message.is_read ? '✓✓ Seen' : '✓ Delivered'}</span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
