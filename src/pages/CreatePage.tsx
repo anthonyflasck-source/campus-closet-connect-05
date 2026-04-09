@@ -136,19 +136,33 @@ export default function CreatePage() {
                 <label className="block text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Photo</label>
                 <div
                   onClick={() => fileRef.current?.click()}
-                  className="border-2 border-dashed border-border rounded-2xl p-8 text-center cursor-pointer text-muted-foreground hover:border-primary hover:bg-primary/5 transition-all"
+                  className="border-2 border-dashed border-border rounded-2xl p-6 text-center cursor-pointer text-muted-foreground hover:border-primary hover:bg-primary/5 transition-all"
                 >
-                  {photoData ? (
-                    <img src={photoData} alt="Preview" className="max-h-[250px] mx-auto rounded-lg" />
+                  {photos.length > 0 ? (
+                    <div className="flex flex-wrap gap-3 justify-center">
+                      {photos.map((photo, i) => (
+                        <div key={i} className="relative group/photo">
+                          <img src={photo} alt={`Preview ${i + 1}`} className="h-[120px] w-[100px] object-cover rounded-lg" />
+                          <button
+                            type="button"
+                            onClick={e => { e.stopPropagation(); removePhoto(i); }}
+                            className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center opacity-0 group-hover/photo:opacity-100 transition-opacity"
+                          >×</button>
+                        </div>
+                      ))}
+                      {photos.length < 5 && (
+                        <div className="h-[120px] w-[100px] rounded-lg border-2 border-dashed border-border flex items-center justify-center text-2xl text-muted-foreground">+</div>
+                      )}
+                    </div>
                   ) : (
                     <>
                       <div className="text-4xl mb-2">📸</div>
-                      <p>Click to upload a photo</p>
-                      <p className="text-xs text-muted-foreground mt-1">JPG, PNG — max 5MB</p>
+                      <p>Click to upload photos</p>
+                      <p className="text-xs text-muted-foreground mt-1">Up to 5 images — JPG, PNG — max 5MB each</p>
                     </>
                   )}
                 </div>
-                <input ref={fileRef} type="file" accept="image/*" onChange={handlePhoto} className="hidden" />
+                <input ref={fileRef} type="file" accept="image/*" multiple onChange={handlePhoto} className="hidden" />
               </div>
 
               <div className="mb-6">
