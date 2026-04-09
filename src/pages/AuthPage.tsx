@@ -31,6 +31,11 @@ export default function AuthPage() {
       }
     } else {
       if (!name.trim()) { setError('Please enter your name'); setSubmitting(false); return; }
+      if (password.length < 8 || !/\d/.test(password)) {
+        setError('Password must be at least 8 characters and contain at least 1 number.');
+        setSubmitting(false);
+        return;
+      }
       const result = await signUp(email, password, name.trim());
       if (result.error) { setError(result.error); setSubmitting(false); }
       else {
