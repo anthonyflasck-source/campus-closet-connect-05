@@ -102,8 +102,11 @@ export default function DetailPage() {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to send message';
-      if (message.includes('permission denied') || message.includes('row-level security')) {
-        toast.error('Unable to send message. Please make sure your email is verified.');
+      console.error('[Messaging] Send failed:', message);
+      if (message.includes('permission denied') || message.includes('row-level security') || message.includes('violates row-level security')) {
+        toast.error('Unable to send message. Your account verification may still be processing — please check your profile or try again shortly.');
+      } else if (message.includes('relation') && message.includes('does not exist')) {
+        toast.error('Messaging is not yet available. Please contact support.');
       } else {
         toast.error(message);
       }
