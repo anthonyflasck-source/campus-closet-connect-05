@@ -62,11 +62,16 @@ export default function Navbar() {
               </Link>
               <Link
                 to="/dashboard"
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`relative px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   isActive('/dashboard') ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5'
                 }`}
               >
                 Dashboard
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold text-primary-foreground px-1" style={{ background: 'var(--gradient-primary)' }}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </Link>
               <button
                 onClick={handleLogout}
