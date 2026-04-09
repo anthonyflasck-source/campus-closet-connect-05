@@ -99,7 +99,7 @@ export default function CreatePage() {
         listing_type: listingType,
         purchase_price: purchasePrice,
         rental_price_per_day: rentalPriceVal,
-        image_urls: photoData ? [photoData] : [],
+        image_urls: photos,
         university: profile?.university || '',
         pickup_location_general: pickupLocation.trim() || null,
         condition: dressLength, // store dress length in condition for now
