@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useProfileById } from '@/hooks/useProfile';
 import type { DressListing } from '@/lib/types';
 import { LISTING_TYPE_BADGE_STYLES, LISTING_TYPE_LABELS } from '@/lib/types';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Props {
   listing: DressListing;
@@ -11,7 +13,9 @@ interface Props {
 export default function ListingCard({ listing, index = 0 }: Props) {
   const { profile: sellerProfile } = useProfileById(listing.owner_id);
   const sellerName = sellerProfile?.full_name || 'Unknown';
-  const imageUrl = listing.image_urls && listing.image_urls.length > 0 ? listing.image_urls[0] : '';
+  const images = listing.image_urls && listing.image_urls.length > 0 ? listing.image_urls : [];
+  const [currentImg, setCurrentImg] = useState(0);
+  const hasMultiple = images.length > 1;
 
   return (
     <Link
@@ -25,15 +29,36 @@ export default function ListingCard({ listing, index = 0 }: Props) {
       }}
     >
       <div className="relative w-full overflow-hidden bg-surface" style={{ paddingTop: '120%' }}>
-        {imageUrl ? (
+        {images.length > 0 ? (
           <img
-            src={imageUrl}
+            src={images[currentImg]}
             alt={listing.title}
             loading="lazy"
             className="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-105"
           />
         ) : (
           <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-5xl text-muted-foreground">👗</div>
+        )}
+        {hasMultiple && (
+          <>
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCurrentImg(i => (i - 1 + images.length) % images.length); }}
+              className="absolute left-1.5 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+            >
+              <ChevronLeft className="w-4 h-4 text-foreground" />
+            </button>
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCurrentImg(i => (i + 1) % images.length); }}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 z-20 w-7 h-7 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+            >
+              <ChevronRight className="w-4 h-4 text-foreground" />
+            </button>
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 flex gap-1">
+              {images.map((_, i) => (
+                <span key={i} className={`w-1.5 h-1.5 rounded-full transition-colors ${i === currentImg ? 'bg-primary-foreground' : 'bg-primary-foreground/40'}`} />
+              ))}
+            </div>
+          </>
         )}
         <span
           className="absolute top-2 left-2 px-3 py-1 rounded-full text-[0.7rem] font-bold uppercase tracking-wide text-primary-foreground z-10"
