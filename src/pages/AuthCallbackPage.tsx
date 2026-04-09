@@ -39,7 +39,7 @@ export default function AuthCallbackPage() {
 
       if (!cancelled) {
         toast.success('Email confirmed. Your account is ready.');
-        navigate('/dashboard', { replace: true });
+        navigate('/', { replace: true });
       }
     };
 
