@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useProfilesByIds } from '@/hooks/useProfile';
 import { supabase } from '@/integrations/supabase/client';
 import type { DressListing } from '@/lib/types';
+import ChangePasswordSection from '@/components/ChangePasswordSection';
 import { fetchConversationMessages, fetchUserConversations, sendConversationMessage, type ChatMessage, type Conversation } from '@/lib/messaging';
 import { formatDate } from '@/lib/store';
 import { toast } from 'sonner';
@@ -13,7 +14,7 @@ import { toast } from 'sonner';
 export default function DashboardPageSecure() {
   const navigate = useNavigate();
   const { user, profile, loading, isSchoolEmailVerified } = useAuth();
-  const [activeTab, setActiveTab] = useState<'listings' | 'received' | 'sent'>('listings');
+  const [activeTab, setActiveTab] = useState<'listings' | 'received' | 'sent' | 'settings'>('listings');
   const [myListings, setMyListings] = useState<DressListing[]>([]);
   const [loadingListings, setLoadingListings] = useState(true);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -307,6 +308,7 @@ export default function DashboardPageSecure() {
             <button className={tabClass('listings')} onClick={() => setActiveTab('listings')}>My Listings</button>
             <button className={tabClass('received')} onClick={() => setActiveTab('received')}>Inbox ({receivedConversations.length})</button>
             <button className={tabClass('sent')} onClick={() => setActiveTab('sent')}>Sent ({sentConversations.length})</button>
+            <button className={tabClass('settings')} onClick={() => setActiveTab('settings')}>Settings</button>
           </div>
 
           <div className="animate-slide-up">
@@ -343,6 +345,10 @@ export default function DashboardPageSecure() {
                   );
                 })
               )
+            )}
+
+            {activeTab === 'settings' && (
+              <ChangePasswordSection />
             )}
 
             {(activeTab === 'received' || activeTab === 'sent') && (
