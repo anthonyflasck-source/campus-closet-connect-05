@@ -102,7 +102,14 @@ export default function Navbar() {
           {user ? (
             <>
               <Link to="/create" onClick={() => setMenuOpen(false)} className="w-full text-center py-3 rounded-full text-sm font-medium text-muted-foreground">+ List Item</Link>
-              <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="w-full text-center py-3 rounded-full text-sm font-medium text-muted-foreground">Dashboard</Link>
+              <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="relative w-full text-center py-3 rounded-full text-sm font-medium text-muted-foreground">
+                Dashboard
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-4 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold text-primary-foreground px-1" style={{ background: 'var(--gradient-primary)' }}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </Link>
               <button onClick={handleLogout} className="w-full text-center py-3 rounded-full text-sm font-medium text-muted-foreground">Sign Out</button>
             </>
           ) : (
