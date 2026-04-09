@@ -153,14 +153,14 @@ export default function CreatePage() {
                   <label className="block text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Size</label>
                   <select value={size} onChange={e => setSize(e.target.value)} className={selectClass} required>
                     <option value="">Select size</option>
-                    {['XS','S','M','L','XL'].map(s => <option key={s} value={s}>{s}</option>)}
+                    {['XXS','XS','S','M','L','XL','XXL'].map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Color</label>
                   <select value={color} onChange={e => setColor(e.target.value)} className={selectClass} required>
                     <option value="">Select color</option>
-                    {['Black','Blue','Gold','Green','Navy','Pink','Purple','Red','Rose','White'].map(c => <option key={c} value={c}>{c}</option>)}
+                    {['Black','Blue','Brown','Coral','Gold','Green','Grey','Ivory','Lavender','Maroon','Navy','Orange','Pink','Purple','Red','Rose','Silver','Tan','Teal','White','Yellow'].map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
               </div>
@@ -177,7 +177,7 @@ export default function CreatePage() {
                   <label className="block text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Event Type</label>
                   <select value={eventType} onChange={e => setEventType(e.target.value)} className={selectClass} required>
                     <option value="">Select event</option>
-                    {['Formal','Semi-Formal','Date Party','Mixer'].map(ev => <option key={ev} value={ev}>{ev}</option>)}
+                    {['Formal','Semi-Formal','Date Party','Mixer','Other'].map(ev => <option key={ev} value={ev}>{ev}</option>)}
                   </select>
                 </div>
               </div>

@@ -44,7 +44,8 @@ export default function ExplorePage() {
       if (filters.price === '0-25' && price > 25) return false;
       if (filters.price === '25-50' && (price < 25 || price > 50)) return false;
       if (filters.price === '50-100' && (price < 50 || price > 100)) return false;
-      if (filters.price === '100+' && price < 100) return false;
+      if (filters.price === '100-150' && (price < 100 || price > 150)) return false;
+      if (filters.price === '150+' && price < 150) return false;
     }
     return true;
   });
@@ -75,15 +76,15 @@ export default function ExplorePage() {
             />
             <select value={filters.size} onChange={e => updateFilter('size', e.target.value)} className={selectClass}>
               <option value="">All Sizes</option>
-              {['XS','S','M','L','XL'].map(s => <option key={s} value={s}>{s}</option>)}
+              {['XXS','XS','S','M','L','XL','XXL'].map(s => <option key={s} value={s}>{s}</option>)}
             </select>
             <select value={filters.color} onChange={e => updateFilter('color', e.target.value)} className={selectClass}>
               <option value="">All Colors</option>
-              {['Black','Blue','Gold','Green','Navy','Pink','Purple','Red','Rose','White'].map(c => <option key={c} value={c}>{c}</option>)}
+              {['Black','Blue','Brown','Coral','Gold','Green','Grey','Ivory','Lavender','Maroon','Navy','Orange','Pink','Purple','Red','Rose','Silver','Tan','Teal','White','Yellow'].map(c => <option key={c} value={c}>{c}</option>)}
             </select>
             <select value={filters.event} onChange={e => updateFilter('event', e.target.value)} className={selectClass}>
               <option value="">All Events</option>
-              {['Formal','Semi-Formal','Date Party','Mixer'].map(e => <option key={e} value={e}>{e}</option>)}
+              {['Formal','Semi-Formal','Date Party','Mixer','Other'].map(e => <option key={e} value={e}>{e}</option>)}
             </select>
             <select value={filters.type} onChange={e => updateFilter('type', e.target.value)} className={selectClass}>
               <option value="">All Types</option>
@@ -96,7 +97,8 @@ export default function ExplorePage() {
               <option value="0-25">Under $25</option>
               <option value="25-50">$25 – $50</option>
               <option value="50-100">$50 – $100</option>
-              <option value="100+">$100+</option>
+              <option value="100-150">$100 – $150</option>
+              <option value="150+">$150+</option>
             </select>
             <button
               onClick={clearFilters}
