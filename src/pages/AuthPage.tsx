@@ -31,6 +31,11 @@ export default function AuthPage() {
       }
     } else {
       if (!name.trim()) { setError('Please enter your name'); setSubmitting(false); return; }
+      if (password.length < 8 || !/\d/.test(password)) {
+        setError('Password must be at least 8 characters and contain at least 1 number.');
+        setSubmitting(false);
+        return;
+      }
       const result = await signUp(email, password, name.trim());
       if (result.error) { setError(result.error); setSubmitting(false); }
       else {
@@ -76,7 +81,11 @@ export default function AuthPage() {
             </div>
             <div className="mb-6">
               <label className="block text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">Password</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className={inputClass} required minLength={6} />
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" className={inputClass} required minLength={8} />
+              <ul className="mt-2 text-xs text-muted-foreground space-y-0.5">
+                <li className={password.length >= 8 ? 'text-primary' : ''}>• At least 8 characters</li>
+                <li className={/\d/.test(password) ? 'text-primary' : ''}>• At least 1 number</li>
+              </ul>
             </div>
 
             {!isLogin && (
