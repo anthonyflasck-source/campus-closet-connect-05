@@ -20,6 +20,7 @@ export default function DetailPage() {
   const [loadingListing, setLoadingListing] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [msgText, setMsgText] = useState('');
+  const [currentImg, setCurrentImg] = useState(0);
 
   // Fetch listing from Supabase
   useEffect(() => {
@@ -70,7 +71,6 @@ export default function DetailPage() {
   const sellerName = sellerProfile?.full_name || 'Unknown';
   const isOwner = user && user.id === listing.owner_id;
   const images = listing.image_urls && listing.image_urls.length > 0 ? listing.image_urls : [];
-  const [currentImg, setCurrentImg] = useState(0);
   const hasMultiple = images.length > 1;
   const eventLabel = listing.event_type || listing.category;
 
@@ -147,11 +147,32 @@ export default function DetailPage() {
           </button>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-16 animate-fade-in">
-            <div className="rounded-3xl overflow-hidden bg-surface border border-border">
-              {imageUrl ? (
-                <img src={imageUrl} alt={listing.title} className="w-full aspect-[3/4] object-cover" />
+            <div className="rounded-3xl overflow-hidden bg-surface border border-border relative group">
+              {images.length > 0 ? (
+                <img src={images[currentImg]} alt={listing.title} className="w-full aspect-[3/4] object-cover" />
               ) : (
                 <div className="w-full aspect-[3/4] flex items-center justify-center text-5xl text-muted-foreground bg-surface">👗</div>
+              )}
+              {hasMultiple && (
+                <>
+                  <button
+                    onClick={() => setCurrentImg(i => (i - 1 + images.length) % images.length)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-foreground" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentImg(i => (i + 1) % images.length)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+                  >
+                    <ChevronRight className="w-5 h-5 text-foreground" />
+                  </button>
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+                    {images.map((_, i) => (
+                      <button key={i} onClick={() => setCurrentImg(i)} className={`w-2 h-2 rounded-full transition-colors ${i === currentImg ? 'bg-primary-foreground' : 'bg-primary-foreground/40'}`} />
+                    ))}
+                  </div>
+                </>
               )}
             </div>
 
