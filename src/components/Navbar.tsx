@@ -25,6 +25,7 @@ export default function Navbar() {
         <Link to="/" className="flex items-center gap-2 text-lg font-bold hover:opacity-85 transition-opacity">
           <span className="text-2xl">👗</span>
           <span className="gradient-text">CampusCloset</span>
+          <span className="text-xs font-semibold text-muted-foreground tracking-wide uppercase">Illinois</span>
         </Link>
 
         {/* Mobile menu button */}
