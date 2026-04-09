@@ -14,6 +14,7 @@ export interface ChatMessage {
   id: string;
   conversation_id: string;
   sender_id: string;
+  recipient_id: string;
   body: string;
   created_at: string;
 }
@@ -24,6 +25,26 @@ interface SendMessageInput {
   sellerId: string;
   senderId: string;
   body: string;
+}
+
+interface MessageInsertPayload {
+  conversation_id: string;
+  sender_id: string;
+  recipient_id: string;
+  body: string;
+}
+
+type MessageInsertRow = {
+  conversation_id: string;
+  sender_id: string;
+  body: string;
+};
+
+function getRecipientId(input: Pick<SendMessageInput, 'buyerId' | 'sellerId' | 'senderId'>) {
+  if (input.senderId === input.buyerId) return input.sellerId;
+  if (input.senderId === input.sellerId) return input.buyerId;
+
+  throw new Error('Sender must be a participant in the conversation');
 }
 
 export async function fetchUserConversations(userId: string) {
@@ -75,15 +96,22 @@ export async function getOrCreateConversation(listingId: string, buyerId: string
 }
 
 export async function sendConversationMessage(input: SendMessageInput) {
+  const body = input.body.trim();
+  if (!body) throw new Error('Message body cannot be empty');
+
+  const recipientId = getRecipientId(input);
   const conversation = await getOrCreateConversation(input.listingId, input.buyerId, input.sellerId);
+
+  const messagePayload: MessageInsertPayload = {
+    conversation_id: conversation.id,
+    sender_id: input.senderId,
+    recipient_id: recipientId,
+    body,
+  };
 
   const { data, error } = await supabase
     .from('messages')
-    .insert({
-      conversation_id: conversation.id,
-      sender_id: input.senderId,
-      body: input.body.trim(),
-    })
+    .insert(messagePayload as unknown as MessageInsertRow)
     .select('*')
     .single();
 
