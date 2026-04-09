@@ -335,12 +335,20 @@ export default function DashboardPageSecure() {
                         <h4 className="font-medium whitespace-nowrap overflow-hidden text-ellipsis">{listing.title}</h4>
                         <p className="text-xs text-muted-foreground">{listing.size} Â· {listing.color || 'â€”'} Â· {typeLabel} Â· ${price}</p>
                       </div>
-                      <button
-                        onClick={e => { e.stopPropagation(); handleDelete(listing.id); }}
-                        className="px-4 py-2 rounded-full text-xs font-semibold text-destructive bg-destructive/15 border border-destructive/20 hover:bg-destructive/25 transition-all shrink-0"
-                      >
-                        ðŸ—‘
-                      </button>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={e => { e.stopPropagation(); navigate(`/edit/${listing.id}`); }}
+                          className="px-4 py-2 rounded-full text-xs font-semibold text-primary bg-primary/15 border border-primary/20 hover:bg-primary/25 transition-all"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={e => { e.stopPropagation(); handleDelete(listing.id); }}
+                          className="px-4 py-2 rounded-full text-xs font-semibold text-destructive bg-destructive/15 border border-destructive/20 hover:bg-destructive/25 transition-all"
+                        >
+                          🗑
+                        </button>
+                      </div>
                     </div>
                   );
                 })
