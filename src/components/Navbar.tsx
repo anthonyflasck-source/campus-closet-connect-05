@@ -8,6 +8,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const unreadCount = useUnreadCount();
 
   const isActive = (path: string) => location.pathname === path;
 
