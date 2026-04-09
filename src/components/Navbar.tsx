@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useUnreadCount } from '@/hooks/useUnreadCount';
 
 export default function Navbar() {
   const location = useLocation();
