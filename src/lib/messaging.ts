@@ -31,6 +31,7 @@ interface MessageInsertPayload {
   conversation_id: string;
   sender_id: string;
   recipient_id: string;
+  listing_id: string;
   body: string;
 }
 
@@ -106,6 +107,7 @@ export async function sendConversationMessage(input: SendMessageInput) {
     conversation_id: conversation.id,
     sender_id: input.senderId,
     recipient_id: recipientId,
+    listing_id: input.listingId,
     body,
   };
 
