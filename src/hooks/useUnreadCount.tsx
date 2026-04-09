@@ -11,10 +11,9 @@ export function useUnreadCount() {
 
     const fetchCount = async () => {
       const { count: c, error } = await supabase
-        .from('messages')
+        .from('conversations')
         .select('*', { count: 'exact', head: true })
-        .eq('recipient_id', user.id)
-        .eq('is_read', false);
+        .eq('seller_id', user.id);
 
       if (!error && c !== null) setCount(c);
     };
@@ -26,8 +25,8 @@ export function useUnreadCount() {
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'messages',
-        filter: `recipient_id=eq.${user.id}`,
+        table: 'conversations',
+        filter: `seller_id=eq.${user.id}`,
       }, () => fetchCount())
       .subscribe();
 
