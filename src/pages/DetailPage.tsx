@@ -87,6 +87,10 @@ export default function DetailPage() {
       navigate('/dashboard');
       return;
     }
+    if (user.id === listing.owner_id) {
+      toast.error("You can't message yourself");
+      return;
+    }
 
     try {
       await sendConversationMessage({
@@ -98,7 +102,11 @@ export default function DetailPage() {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to send message';
-      toast.error(message);
+      if (message.includes('permission denied') || message.includes('row-level security')) {
+        toast.error('Unable to send message. Please make sure your email is verified.');
+      } else {
+        toast.error(message);
+      }
       return;
     }
 

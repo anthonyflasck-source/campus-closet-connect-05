@@ -34,9 +34,12 @@ export function useProfileById(userId: string | null | undefined) {
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single()
-      .then(({ data }) => {
+      .maybeSingle()
+      .then(({ data, error }) => {
         if (!cancelled) {
+          if (error) {
+            console.warn('Failed to fetch profile:', error.message);
+          }
           setProfile(data as PublicProfile | null);
           setLoading(false);
         }
