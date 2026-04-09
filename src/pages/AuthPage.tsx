@@ -15,11 +15,10 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
-  if (!loading && user) { navigate('/'); return null; }
-
   const [forgotMode, setForgotMode] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+
+  if (!loading && user) { navigate('/'); return null; }
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
