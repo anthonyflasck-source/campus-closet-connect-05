@@ -31,6 +31,11 @@ export default function AuthPage() {
       }
     } else {
       if (!name.trim()) { setError('Please enter your name'); setSubmitting(false); return; }
+      if (!email.toLowerCase().endsWith('@illinois.edu')) {
+        setError('Only @illinois.edu email addresses are allowed.');
+        setSubmitting(false);
+        return;
+      }
       if (password.length < 8 || !/\d/.test(password)) {
         setError('Password must be at least 8 characters and contain at least 1 number.');
         setSubmitting(false);
@@ -90,7 +95,7 @@ export default function AuthPage() {
 
             {!isLogin && (
               <div className="mb-6 p-3 rounded-lg bg-primary/5 border border-primary/20 text-xs text-muted-foreground">
-                🎓 CampusCloset is exclusively for college students. A <strong className="text-primary">.edu</strong> email is required to sign up.
+                🎓 CampusCloset is exclusively for University of Illinois students. An <strong className="text-primary">@illinois.edu</strong> email is required.
               </div>
             )}
 
