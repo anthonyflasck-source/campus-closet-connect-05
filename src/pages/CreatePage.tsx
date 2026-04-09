@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 export default function CreatePage() {
   const navigate = useNavigate();
   const { user, profile, loading, isSchoolEmailVerified } = useAuth();
-  const [photoData, setPhotoData] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<string[]>([]);
   const [title, setTitle] = useState('');
   const [desc, setDesc] = useState('');
   const [size, setSize] = useState('');
