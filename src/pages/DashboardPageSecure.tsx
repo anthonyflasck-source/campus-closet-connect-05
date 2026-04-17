@@ -51,6 +51,47 @@ export default function DashboardPageSecure() {
       .then(({ data }) => setPurchaseOrders((data as any) || []));
   }, [user]);
 
+  const handleOrderDecision = async (
+    orderId: string,
+    dressId: string,
+    buyerId: string,
+    decision: 'accepted' | 'declined'
+  ) => {
+    if (!user) return;
+    const { error: orderErr } = await supabase
+      .from('orders')
+      .update({ status: decision })
+      .eq('id', orderId)
+      .eq('seller_id', user.id);
+    if (orderErr) {
+      toast.error(`Could not ${decision === 'accepted' ? 'accept' : 'decline'} order`);
+      return;
+    }
+
+    // If declined, relist the dress so it shows up on Explore again
+    if (decision === 'declined') {
+      await supabase
+        .from('dresses')
+        .update({ status: 'available', is_available: true })
+        .eq('id', dressId)
+        .eq('owner_id', user.id);
+    }
+
+    // Notify the buyer in the conversation thread
+    try {
+      const dressTitle = orderDresses.get(dressId)?.title || 'your purchase';
+      const msg = decision === 'accepted'
+        ? `✅ Your purchase of "${dressTitle}" has been accepted by the seller. Coordinate pickup/shipping in this chat.`
+        : `❌ The seller declined your purchase of "${dressTitle}". Your card was not charged and the listing is available again.`;
+      await sendConversationMessage({ senderId: user.id, recipientId: buyerId, dressId, content: msg });
+    } catch {
+      // non-fatal
+    }
+
+    setSalesOrders(prev => prev.map(o => (o.id === orderId ? { ...o, status: decision } : o)));
+    toast.success(decision === 'accepted' ? 'Purchase accepted' : 'Purchase declined — listing relisted');
+  };
+
   useEffect(() => {
     if (!user || !isSchoolEmailVerified) {
       setConversations([]);
