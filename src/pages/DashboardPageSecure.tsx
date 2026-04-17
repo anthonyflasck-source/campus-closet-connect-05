@@ -118,11 +118,27 @@ export default function DashboardPageSecure() {
       ids.add(conversation.buyer_id);
       ids.add(conversation.seller_id);
     });
+    salesOrders.forEach(o => ids.add(o.buyer_id));
+    purchaseOrders.forEach(o => ids.add(o.seller_id));
     ids.delete(user.id);
     return [...ids];
-  }, [conversations, user]);
+  }, [conversations, user, salesOrders, purchaseOrders]);
 
   const { profiles: conversationProfiles } = useProfilesByIds(conversationUserIds);
+
+  const orderDressIds = useMemo(
+    () => [...new Set([...salesOrders.map(o => o.dress_id), ...purchaseOrders.map(o => o.dress_id)])],
+    [salesOrders, purchaseOrders]
+  );
+  const [orderDresses, setOrderDresses] = useState<Map<string, DressListing>>(new Map());
+  useEffect(() => {
+    if (orderDressIds.length === 0) { setOrderDresses(new Map()); return; }
+    supabase.from('dresses').select('*').in('id', orderDressIds).then(({ data }) => {
+      const map = new Map<string, DressListing>();
+      ((data as DressListing[]) || []).forEach(d => map.set(d.id, d));
+      setOrderDresses(map);
+    });
+  }, [orderDressIds.join(',')]);
 
   const receivedConversations = useMemo(
     () => conversations.filter(conversation => conversation.seller_id === user?.id),
