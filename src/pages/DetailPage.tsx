@@ -143,6 +143,67 @@ export default function DetailPage() {
   };
 
   const contactLabel = listing.listing_type === 'rent' ? 'Request to Rent' : listing.listing_type === 'both' ? 'Buy or Rent' : 'Contact Seller';
+  const canBuy = listing.listing_type === 'sale' || listing.listing_type === 'both';
+  const buyPrice = listing.purchase_price || 0;
+
+  const handleBuyNow = () => {
+    if (!user) { toast.error('Please sign in to purchase'); navigate('/login'); return; }
+    if (!isSchoolEmailVerified) { toast.error('Verify your school email before purchasing'); navigate('/dashboard'); return; }
+    if (user.id === listing.owner_id) { toast.error("You can't buy your own listing"); return; }
+    setCheckoutName(user.user_metadata?.full_name || user.email?.split('@')[0] || '');
+    setShowCheckout(true);
+  };
+
+  const handleConfirmPurchase = async () => {
+    if (!user || !listing) return;
+    const cleanCard = cardNumber.replace(/\s/g, '');
+    if (!checkoutName.trim()) return toast.error('Enter the cardholder name');
+    if (!/^\d{15,16}$/.test(cleanCard)) return toast.error('Enter a valid 15-16 digit card number');
+    if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(cardExpiry)) return toast.error('Expiry must be MM/YY');
+    if (!/^\d{3,4}$/.test(cardCvv)) return toast.error('CVV must be 3-4 digits');
+
+    setProcessing(true);
+    const confirmationCode = `CC-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+
+    const { error } = await supabase.from('orders').insert({
+      buyer_id: user.id,
+      seller_id: listing.owner_id,
+      dress_id: listing.id,
+      final_price: buyPrice,
+      status: 'completed',
+    });
+
+    if (error) {
+      setProcessing(false);
+      toast.error(error.message || 'Payment failed');
+      return;
+    }
+
+    try {
+      await sendConversationMessage({
+        listingId: listing.id,
+        buyerId: user.id,
+        sellerId: listing.owner_id,
+        senderId: user.id,
+        body: `✅ Purchase confirmed!\n\nBuyer: ${checkoutName.trim()}\nAmount: $${buyPrice}\nConfirmation: ${confirmationCode}\n\nPlease coordinate pickup details.`,
+      });
+    } catch (e) {
+      console.warn('Could not auto-message seller:', e);
+    }
+
+    await supabase.from('dresses').update({ is_available: false }).eq('id', listing.id);
+
+    setProcessing(false);
+    setConfirmation(confirmationCode);
+    toast.success('Payment successful!');
+  };
+
+  const closeCheckout = () => {
+    setShowCheckout(false);
+    setConfirmation(null);
+    setCardNumber(''); setCardExpiry(''); setCardCvv('');
+  };
+
 
   return (
     <>
