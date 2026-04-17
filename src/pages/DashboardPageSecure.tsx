@@ -382,6 +382,64 @@ export default function DashboardPageSecure() {
               )
             )}
 
+            {activeTab === 'sales' && (
+              salesOrders.length === 0 && purchaseOrders.length === 0 ? (
+                <EmptyState icon="🧾" title="No sales or purchases yet" desc="When someone buys one of your dresses (or you buy one), the order will appear here." />
+              ) : (
+                <div className="space-y-8">
+                  {salesOrders.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-bold mb-3">Sales Received</h3>
+                      <div className="space-y-2">
+                        {salesOrders.map(o => {
+                          const buyer = conversationProfiles.get(o.buyer_id);
+                          const dress = orderDresses.get(o.dress_id);
+                          return (
+                            <div key={o.id} className="flex items-center gap-4 p-4 border border-border rounded-2xl" style={{ background: 'var(--gradient-card)' }}>
+                              <div className="w-12 h-12 rounded-full flex items-center justify-center text-base font-bold text-primary-foreground shrink-0" style={{ background: 'var(--gradient-primary)' }}>
+                                {(buyer?.full_name || 'U').charAt(0)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="font-semibold truncate">{buyer?.full_name || 'Unknown buyer'}</div>
+                                <div className="text-xs text-muted-foreground truncate">{dress?.title || 'Listing removed'} · {formatDate(o.created_at)}</div>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <div className="font-extrabold text-primary-light">${o.final_price}</div>
+                                <div className="text-xs uppercase tracking-wide text-success">{o.status}</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  {purchaseOrders.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-bold mb-3">My Purchases</h3>
+                      <div className="space-y-2">
+                        {purchaseOrders.map(o => {
+                          const seller = conversationProfiles.get(o.seller_id);
+                          const dress = orderDresses.get(o.dress_id);
+                          return (
+                            <div key={o.id} className="flex items-center gap-4 p-4 border border-border rounded-2xl" style={{ background: 'var(--gradient-card)' }}>
+                              <div className="flex-1 min-w-0">
+                                <div className="font-semibold truncate">{dress?.title || 'Listing removed'}</div>
+                                <div className="text-xs text-muted-foreground truncate">Sold by {seller?.full_name || 'Unknown'} · {formatDate(o.created_at)}</div>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <div className="font-extrabold text-primary-light">${o.final_price}</div>
+                                <div className="text-xs uppercase tracking-wide text-success">{o.status}</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            )}
+
             {activeTab === 'settings' && (
               <ChangePasswordSection />
             )}
