@@ -83,7 +83,13 @@ export default function DashboardPageSecure() {
       const msg = decision === 'accepted'
         ? `✅ Your purchase of "${dressTitle}" has been accepted by the seller. Coordinate pickup/shipping in this chat.`
         : `❌ The seller declined your purchase of "${dressTitle}". Your card was not charged and the listing is available again.`;
-      await sendConversationMessage({ senderId: user.id, recipientId: buyerId, dressId, content: msg });
+      await sendConversationMessage({
+        listingId: dressId,
+        buyerId,
+        sellerId: user.id,
+        senderId: user.id,
+        body: msg,
+      });
     } catch {
       // non-fatal
     }
