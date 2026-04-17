@@ -394,8 +394,13 @@ export default function DashboardPageSecure() {
                         {salesOrders.map(o => {
                           const buyer = conversationProfiles.get(o.buyer_id);
                           const dress = orderDresses.get(o.dress_id);
+                          const isPending = !o.status || o.status === 'pending';
+                          const statusColor =
+                            o.status === 'accepted' || o.status === 'completed' ? 'text-success'
+                            : o.status === 'declined' ? 'text-destructive'
+                            : 'text-muted-foreground';
                           return (
-                            <div key={o.id} className="flex items-center gap-4 p-4 border border-border rounded-2xl" style={{ background: 'var(--gradient-card)' }}>
+                            <div key={o.id} className="flex flex-wrap items-center gap-4 p-4 border border-border rounded-2xl" style={{ background: 'var(--gradient-card)' }}>
                               <div className="w-12 h-12 rounded-full flex items-center justify-center text-base font-bold text-primary-foreground shrink-0" style={{ background: 'var(--gradient-primary)' }}>
                                 {(buyer?.full_name || 'U').charAt(0)}
                               </div>
@@ -405,8 +410,25 @@ export default function DashboardPageSecure() {
                               </div>
                               <div className="text-right shrink-0">
                                 <div className="font-extrabold text-primary-light">${o.final_price}</div>
-                                <div className="text-xs uppercase tracking-wide text-success">{o.status}</div>
+                                <div className={`text-xs uppercase tracking-wide ${statusColor}`}>{o.status || 'pending'}</div>
                               </div>
+                              {isPending && (
+                                <div className="flex gap-2 w-full sm:w-auto">
+                                  <button
+                                    onClick={() => handleOrderDecision(o.id, o.dress_id, o.buyer_id, 'accepted')}
+                                    className="flex-1 sm:flex-none px-4 py-2 rounded-full text-sm font-semibold text-primary-foreground hover:opacity-90 transition"
+                                    style={{ background: 'var(--gradient-primary)' }}
+                                  >
+                                    Accept
+                                  </button>
+                                  <button
+                                    onClick={() => handleOrderDecision(o.id, o.dress_id, o.buyer_id, 'declined')}
+                                    className="flex-1 sm:flex-none px-4 py-2 rounded-full text-sm font-semibold border border-destructive text-destructive hover:bg-destructive/10 transition"
+                                  >
+                                    Decline
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           );
                         })}
