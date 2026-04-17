@@ -44,6 +44,14 @@ export default function DashboardPageSecure() {
   }, [user]);
 
   useEffect(() => {
+    if (!user) return;
+    supabase.from('orders').select('*').eq('seller_id', user.id).order('created_at', { ascending: false })
+      .then(({ data }) => setSalesOrders((data as any) || []));
+    supabase.from('orders').select('*').eq('buyer_id', user.id).order('created_at', { ascending: false })
+      .then(({ data }) => setPurchaseOrders((data as any) || []));
+  }, [user]);
+
+  useEffect(() => {
     if (!user || !isSchoolEmailVerified) {
       setConversations([]);
       setLoadingConversations(false);
