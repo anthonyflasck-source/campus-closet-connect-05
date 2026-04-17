@@ -341,6 +341,73 @@ export default function DetailPage() {
           </div>
         </div>
       )}
+
+      {showCheckout && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 animate-fade-in" style={{ background: 'hsla(270, 30%, 5%, 0.92)', backdropFilter: 'blur(8px)' }} onClick={e => e.target === e.currentTarget && !processing && closeCheckout()}>
+          <div className="bg-surface border border-border rounded-3xl p-8 w-full max-w-[500px] animate-slide-up">
+            {confirmation ? (
+              <div className="text-center">
+                <div className="text-5xl mb-4">✅</div>
+                <h2 className="text-2xl font-bold mb-2">Payment Successful</h2>
+                <p className="text-sm text-muted-foreground mb-6">Your purchase of <em>{listing.title}</em> is complete. The seller has been notified.</p>
+                <div className="bg-foreground/5 border border-border rounded-lg p-4 mb-6 text-left">
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Confirmation Code</div>
+                  <div className="font-mono font-bold text-primary-light break-all">{confirmation}</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide mt-3 mb-1">Buyer</div>
+                  <div className="font-semibold">{checkoutName}</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide mt-3 mb-1">Amount Charged</div>
+                  <div className="font-semibold">${buyPrice}</div>
+                </div>
+                <button onClick={() => { closeCheckout(); navigate('/dashboard'); }} className="w-full py-4 rounded-full font-semibold text-primary-foreground" style={{ background: 'var(--gradient-primary)' }}>
+                  View My Dashboard
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold">Checkout</h2>
+                  <button onClick={closeCheckout} disabled={processing} className="w-9 h-9 rounded-full bg-foreground/5 flex items-center justify-center text-lg hover:bg-foreground/10 transition-colors disabled:opacity-50">✕</button>
+                </div>
+                <div className="bg-foreground/5 border border-border rounded-lg p-4 mb-6 flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wide">Total</div>
+                    <div className="text-lg font-bold">{listing.title}</div>
+                  </div>
+                  <div className="text-2xl font-extrabold text-primary-light">${buyPrice}</div>
+                </div>
+                <p className="text-xs text-muted-foreground mb-4">⚠️ Demo checkout — use any test card details (e.g. 4242 4242 4242 4242). No real payment is processed.</p>
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Cardholder Name</label>
+                    <input value={checkoutName} onChange={e => setCheckoutName(e.target.value)} placeholder="Jane Doe" className="w-full bg-input border border-border rounded-lg px-4 py-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Card Number</label>
+                    <input value={cardNumber} onChange={e => setCardNumber(e.target.value.replace(/[^\d ]/g, '').slice(0, 19))} placeholder="4242 4242 4242 4242" className="w-full bg-input border border-border rounded-lg px-4 py-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 font-mono" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Expiry (MM/YY)</label>
+                      <input value={cardExpiry} onChange={e => {
+                        let v = e.target.value.replace(/[^\d]/g, '').slice(0, 4);
+                        if (v.length >= 3) v = v.slice(0, 2) + '/' + v.slice(2);
+                        setCardExpiry(v);
+                      }} placeholder="12/27" className="w-full bg-input border border-border rounded-lg px-4 py-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 font-mono" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">CVV</label>
+                      <input value={cardCvv} onChange={e => setCardCvv(e.target.value.replace(/[^\d]/g, '').slice(0, 4))} placeholder="123" className="w-full bg-input border border-border rounded-lg px-4 py-3 outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 font-mono" />
+                    </div>
+                  </div>
+                </div>
+                <button onClick={handleConfirmPurchase} disabled={processing} className="w-full py-4 rounded-full font-semibold text-primary-foreground text-base disabled:opacity-60" style={{ background: 'var(--gradient-primary)' }}>
+                  {processing ? 'Processing...' : `Pay $${buyPrice}`}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
