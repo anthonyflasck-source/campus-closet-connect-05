@@ -2,6 +2,13 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUnreadCount } from '@/hooks/useUnreadCount';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export default function Navbar() {
   const location = useLocation();
@@ -73,15 +80,25 @@ export default function Navbar() {
                   </span>
                 )}
               </Link>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 py-1 pl-1 pr-4 rounded-full bg-foreground/5 text-sm cursor-pointer hover:bg-foreground/10 transition-colors"
-              >
-                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-primary-foreground" style={{ background: 'var(--gradient-primary)' }}>
-                  {displayName.charAt(0).toUpperCase()}
-                </div>
-                <span>{displayName.split(' ')[0]}</span>
-              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 py-1 pl-1 pr-4 rounded-full bg-foreground/5 text-sm cursor-pointer hover:bg-foreground/10 transition-colors outline-none">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-primary-foreground" style={{ background: 'var(--gradient-primary)' }}>
+                      {displayName.charAt(0).toUpperCase()}
+                    </div>
+                    <span>{displayName.split(' ')[0]}</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuItem onClick={() => navigate('/dashboard')} className="cursor-pointer">
+                    View Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           ) : (
             <Link
