@@ -14,7 +14,9 @@ import { toast } from 'sonner';
 export default function DashboardPageSecure() {
   const navigate = useNavigate();
   const { user, profile, loading, isSchoolEmailVerified } = useAuth();
-  const [activeTab, setActiveTab] = useState<'listings' | 'received' | 'sent' | 'settings'>('listings');
+  const [activeTab, setActiveTab] = useState<'listings' | 'received' | 'sent' | 'sales' | 'settings'>('listings');
+  const [salesOrders, setSalesOrders] = useState<Array<{ id: string; dress_id: string; buyer_id: string; final_price: number; status: string; created_at: string; purchased_at: string }>>([]);
+  const [purchaseOrders, setPurchaseOrders] = useState<Array<{ id: string; dress_id: string; seller_id: string; final_price: number; status: string; created_at: string; purchased_at: string }>>([]);
   const [myListings, setMyListings] = useState<DressListing[]>([]);
   const [loadingListings, setLoadingListings] = useState(true);
   const [conversations, setConversations] = useState<Conversation[]>([]);
