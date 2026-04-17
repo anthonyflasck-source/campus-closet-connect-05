@@ -14,7 +14,9 @@ import { toast } from 'sonner';
 export default function DashboardPageSecure() {
   const navigate = useNavigate();
   const { user, profile, loading, isSchoolEmailVerified } = useAuth();
-  const [activeTab, setActiveTab] = useState<'listings' | 'received' | 'sent' | 'settings'>('listings');
+  const [activeTab, setActiveTab] = useState<'listings' | 'received' | 'sent' | 'sales' | 'settings'>('listings');
+  const [salesOrders, setSalesOrders] = useState<Array<{ id: string; dress_id: string; buyer_id: string; final_price: number; status: string; created_at: string; purchased_at: string }>>([]);
+  const [purchaseOrders, setPurchaseOrders] = useState<Array<{ id: string; dress_id: string; seller_id: string; final_price: number; status: string; created_at: string; purchased_at: string }>>([]);
   const [myListings, setMyListings] = useState<DressListing[]>([]);
   const [loadingListings, setLoadingListings] = useState(true);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -39,6 +41,14 @@ export default function DashboardPageSecure() {
         setMyListings((data as DressListing[]) || []);
         setLoadingListings(false);
       });
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from('orders').select('*').eq('seller_id', user.id).order('created_at', { ascending: false })
+      .then(({ data }) => setSalesOrders((data as any) || []));
+    supabase.from('orders').select('*').eq('buyer_id', user.id).order('created_at', { ascending: false })
+      .then(({ data }) => setPurchaseOrders((data as any) || []));
   }, [user]);
 
   useEffect(() => {
@@ -108,11 +118,27 @@ export default function DashboardPageSecure() {
       ids.add(conversation.buyer_id);
       ids.add(conversation.seller_id);
     });
+    salesOrders.forEach(o => ids.add(o.buyer_id));
+    purchaseOrders.forEach(o => ids.add(o.seller_id));
     ids.delete(user.id);
     return [...ids];
-  }, [conversations, user]);
+  }, [conversations, user, salesOrders, purchaseOrders]);
 
   const { profiles: conversationProfiles } = useProfilesByIds(conversationUserIds);
+
+  const orderDressIds = useMemo(
+    () => [...new Set([...salesOrders.map(o => o.dress_id), ...purchaseOrders.map(o => o.dress_id)])],
+    [salesOrders, purchaseOrders]
+  );
+  const [orderDresses, setOrderDresses] = useState<Map<string, DressListing>>(new Map());
+  useEffect(() => {
+    if (orderDressIds.length === 0) { setOrderDresses(new Map()); return; }
+    supabase.from('dresses').select('*').in('id', orderDressIds).then(({ data }) => {
+      const map = new Map<string, DressListing>();
+      ((data as DressListing[]) || []).forEach(d => map.set(d.id, d));
+      setOrderDresses(map);
+    });
+  }, [orderDressIds.join(',')]);
 
   const receivedConversations = useMemo(
     () => conversations.filter(conversation => conversation.seller_id === user?.id),
@@ -308,6 +334,7 @@ export default function DashboardPageSecure() {
             <button className={tabClass('listings')} onClick={() => setActiveTab('listings')}>My Listings</button>
             <button className={tabClass('received')} onClick={() => setActiveTab('received')}>Inbox ({receivedConversations.length})</button>
             <button className={tabClass('sent')} onClick={() => setActiveTab('sent')}>Sent ({sentConversations.length})</button>
+            <button className={tabClass('sales')} onClick={() => setActiveTab('sales')}>Sales ({salesOrders.length})</button>
             <button className={tabClass('settings')} onClick={() => setActiveTab('settings')}>Settings</button>
           </div>
 
@@ -352,6 +379,64 @@ export default function DashboardPageSecure() {
                     </div>
                   );
                 })
+              )
+            )}
+
+            {activeTab === 'sales' && (
+              salesOrders.length === 0 && purchaseOrders.length === 0 ? (
+                <EmptyState icon="🧾" title="No sales or purchases yet" desc="When someone buys one of your dresses (or you buy one), the order will appear here." />
+              ) : (
+                <div className="space-y-8">
+                  {salesOrders.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-bold mb-3">Sales Received</h3>
+                      <div className="space-y-2">
+                        {salesOrders.map(o => {
+                          const buyer = conversationProfiles.get(o.buyer_id);
+                          const dress = orderDresses.get(o.dress_id);
+                          return (
+                            <div key={o.id} className="flex items-center gap-4 p-4 border border-border rounded-2xl" style={{ background: 'var(--gradient-card)' }}>
+                              <div className="w-12 h-12 rounded-full flex items-center justify-center text-base font-bold text-primary-foreground shrink-0" style={{ background: 'var(--gradient-primary)' }}>
+                                {(buyer?.full_name || 'U').charAt(0)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="font-semibold truncate">{buyer?.full_name || 'Unknown buyer'}</div>
+                                <div className="text-xs text-muted-foreground truncate">{dress?.title || 'Listing removed'} · {formatDate(o.created_at)}</div>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <div className="font-extrabold text-primary-light">${o.final_price}</div>
+                                <div className="text-xs uppercase tracking-wide text-success">{o.status}</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  {purchaseOrders.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-bold mb-3">My Purchases</h3>
+                      <div className="space-y-2">
+                        {purchaseOrders.map(o => {
+                          const seller = conversationProfiles.get(o.seller_id);
+                          const dress = orderDresses.get(o.dress_id);
+                          return (
+                            <div key={o.id} className="flex items-center gap-4 p-4 border border-border rounded-2xl" style={{ background: 'var(--gradient-card)' }}>
+                              <div className="flex-1 min-w-0">
+                                <div className="font-semibold truncate">{dress?.title || 'Listing removed'}</div>
+                                <div className="text-xs text-muted-foreground truncate">Sold by {seller?.full_name || 'Unknown'} · {formatDate(o.created_at)}</div>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <div className="font-extrabold text-primary-light">${o.final_price}</div>
+                                <div className="text-xs uppercase tracking-wide text-success">{o.status}</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )
             )}
 
