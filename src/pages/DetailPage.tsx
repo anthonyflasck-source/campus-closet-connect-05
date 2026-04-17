@@ -21,6 +21,13 @@ export default function DetailPage() {
   const [showModal, setShowModal] = useState(false);
   const [msgText, setMsgText] = useState('');
   const [currentImg, setCurrentImg] = useState(0);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [checkoutName, setCheckoutName] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
+  const [processing, setProcessing] = useState(false);
+  const [confirmation, setConfirmation] = useState<string | null>(null);
 
   // Fetch listing from Supabase
   useEffect(() => {
