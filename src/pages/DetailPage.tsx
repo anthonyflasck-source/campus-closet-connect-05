@@ -299,9 +299,16 @@ export default function DetailPage() {
                   🗑 Remove Listing
                 </button>
               ) : (
-                <button onClick={handleContact} className="w-full py-4 rounded-full font-semibold text-primary-foreground text-base transition-all hover:-translate-y-0.5 active:scale-[0.98]" style={{ background: 'var(--gradient-primary)', boxShadow: 'var(--shadow-glow)' }}>
-                  💌 {contactLabel}
-                </button>
+                <div className="space-y-3">
+                  {canBuy && (
+                    <button onClick={handleBuyNow} className="w-full py-4 rounded-full font-semibold text-primary-foreground text-base transition-all hover:-translate-y-0.5 active:scale-[0.98]" style={{ background: 'var(--gradient-primary)', boxShadow: 'var(--shadow-glow)' }}>
+                      💳 Buy Now — ${buyPrice}
+                    </button>
+                  )}
+                  <button onClick={handleContact} className="w-full py-4 rounded-full font-semibold text-primary border border-primary/30 bg-primary/10 hover:bg-primary/20 text-base transition-all active:scale-[0.98]">
+                    💌 {contactLabel}
+                  </button>
+                </div>
               )}
             </div>
           </div>
