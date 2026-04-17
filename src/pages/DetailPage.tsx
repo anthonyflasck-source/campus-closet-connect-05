@@ -170,7 +170,7 @@ export default function DetailPage() {
       seller_id: listing.owner_id,
       dress_id: listing.id,
       final_price: buyPrice,
-      status: 'completed',
+      status: 'pending',
     });
 
     if (error) {
@@ -185,7 +185,7 @@ export default function DetailPage() {
         buyerId: user.id,
         sellerId: listing.owner_id,
         senderId: user.id,
-        body: `✅ Purchase confirmed!\n\nBuyer: ${checkoutName.trim()}\nAmount: $${buyPrice}\nConfirmation: ${confirmationCode}\n\nPlease coordinate pickup details.`,
+        body: `🛒 Purchase request submitted!\n\nBuyer: ${checkoutName.trim()}\nAmount: $${buyPrice}\nConfirmation: ${confirmationCode}\nStatus: Awaiting seller approval\n\nThe seller will review and accept or decline this purchase from their dashboard.`,
       });
     } catch (e) {
       console.warn('Could not auto-message seller:', e);
@@ -195,7 +195,7 @@ export default function DetailPage() {
 
     setProcessing(false);
     setConfirmation(confirmationCode);
-    toast.success('Payment successful!');
+    toast.success('Purchase request sent! Awaiting seller approval.');
   };
 
   const closeCheckout = () => {
