@@ -318,6 +318,7 @@ export default function DashboardPageSecure() {
             <button className={tabClass('listings')} onClick={() => setActiveTab('listings')}>My Listings</button>
             <button className={tabClass('received')} onClick={() => setActiveTab('received')}>Inbox ({receivedConversations.length})</button>
             <button className={tabClass('sent')} onClick={() => setActiveTab('sent')}>Sent ({sentConversations.length})</button>
+            <button className={tabClass('sales')} onClick={() => setActiveTab('sales')}>Sales ({salesOrders.length})</button>
             <button className={tabClass('settings')} onClick={() => setActiveTab('settings')}>Settings</button>
           </div>
 
