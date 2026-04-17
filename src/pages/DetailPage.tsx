@@ -191,7 +191,7 @@ export default function DetailPage() {
       console.warn('Could not auto-message seller:', e);
     }
 
-    await supabase.from('dresses').update({ is_available: false }).eq('id', listing.id);
+    await supabase.from('dresses').update({ is_available: false, status: 'sold' }).eq('id', listing.id);
 
     setProcessing(false);
     setConfirmation(confirmationCode);
