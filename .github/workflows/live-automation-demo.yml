@@ -1,0 +1,42 @@
+﻿name: Live Automation Demo
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run-automation:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: automation-demo
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run automation live
+        run: |
+          .\automation-tools\run-automations-repo.ps1
+
+      - name: Resolve latest proof run
+        id: latest
+        run: |
+          $latest = Get-ChildItem -LiteralPath .\automation-proof -Directory | Sort-Object Name -Descending | Select-Object -First 1
+          if (-not $latest) { throw 'No proof run folder generated.' }
+          "path=$($latest.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "name=$($latest.Name)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          Write-Output "Latest run: $($latest.FullName)"
+
+      - name: Show output preview in logs
+        run: |
+          Get-Content -LiteralPath "${{ steps.latest.outputs.path }}\proof-run-log.md"
+
+      - name: Upload run artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: automation-proof-${{ steps.latest.outputs.name }}
+          path: ${{ steps.latest.outputs.path }}
